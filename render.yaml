@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: srm-resolve
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /welcome
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: TZ
+        value: Asia/Kolkata
+      - key: MAIL_USERNAME
+        value: surajxsharma.in@gmail.com
+      - key: MAIL_PASSWORD
+        value: cmzkykhwsixfsvbt
+      - key: MAIL_FROM
+        value: surajxsharma.in@gmail.com
+
