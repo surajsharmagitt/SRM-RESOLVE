@@ -1,0 +1,35 @@
+# Compiled Maven & Java build outputs
+target/
+*.jar
+*.war
+*.ear
+*.class
+hs_err_pid*
+
+# Logs & temporary files
+*.log
+app.log*
+logs/
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Runtime uploads & binary document exports
+srm-resolve-uploads/
+uploads/
+*.docx
+*.pdf
+*.zip
