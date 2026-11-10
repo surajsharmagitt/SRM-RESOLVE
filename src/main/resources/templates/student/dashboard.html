@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Grievance Portal: SRM-Resolve</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+        }
+        .card {
+            border-radius: 1rem;
+            border-color: #e2e8f0;
+        }
+        .emergency-sos-bar {
+            background: linear-gradient(135deg, #991b1b 0%, #b91c1c 50%, #dc2626 100%);
+            border: 1px solid #7f1d1d;
+            border-radius: 12px;
+            color: #ffffff;
+        }
+        .emergency-call-chip {
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .emergency-call-chip:hover {
+            background: #ffffff;
+            color: #991b1b;
+            text-decoration: none;
+        }
+        .category-tile {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 0.75rem 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .category-tile:hover {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+            transform: translateY(-2px);
+        }
+        .category-tile.active {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+        .category-icon {
+            font-size: 1.4rem;
+            color: #2563eb;
+        }
+        .prediction-card {
+            background: #f8fafc;
+            border: 1.5px dashed #94a3b8;
+            border-radius: 12px;
+            transition: all 0.25s ease;
+        }
+        .prediction-card.predicted {
+            background: #f0fdf4;
+            border: 1.5px solid #22c55e;
+        }
+        .prediction-card.emergency {
+            background: #fef2f2;
+            border: 2px solid #ef4444;
+            animation: pulse-border 1.5s infinite;
+        }
+        .prediction-card.confidential {
+            background: #faf5ff;
+            border: 2px solid #9333ea;
+        }
+        @keyframes pulse-border {
+            0% { border-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+            70% { border-color: #dc2626; box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { border-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .btn-emergency-pulse {
+            background-color: #dc2626 !important;
+            border-color: #b91c1c !important;
+            color: #ffffff !important;
+            animation: pulse-btn 1.5s infinite;
+        }
+        .btn-confidential-pulse {
+            background-color: #7e22ce !important;
+            border-color: #6b21a8 !important;
+            color: #ffffff !important;
+        }
+        @keyframes pulse-btn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-light min-vh-100 d-flex flex-column">
+
+<div th:replace="~{fragments/navbar :: navbar('student')}"></div>
+
+<div class="container py-4">
+    <!-- Flash Messages -->
+    <div th:if="${emergencyAlertNotice}" class="alert alert-danger alert-dismissible fade show shadow-lg border-2 border-danger" role="alert">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-fill-exclamation fs-3 text-danger"></i>
+            <div>
+                <strong class="fs-6 d-block">CAMPUS EMERGENCY OR SAFETY DISPATCH ALERT</strong>
+                <span th:text="${emergencyAlertNotice}">Emergency alert details</span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${warningMessage}" class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${warningMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i><span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- CAMPUS EMERGENCY & SAFETY HELPLINE BAR -->
+    <div class="emergency-sos-bar p-3 mb-4 shadow-sm">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-white text-danger p-2 rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px;">
+                    <i class="bi bi-telephone-fill fs-5"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-white text-danger fw-bold text-uppercase" style="font-size: 0.65rem;">24x7 Campus Helpline</span>
+                        <strong class="fs-6 text-white mb-0">SRM-AP Emergency, Safety &amp; Anti-Harassment Services</strong>
+                    </div>
+                    <div class="text-white-50 small mt-1">
+                        For immediate security threats, medical distress, or confidential harassment support, call or type in our AI box below.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hotline Badges -->
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a href="tel:+918662447799" class="emergency-call-chip">
+                    <i class="bi bi-shield-lock-fill"></i> Security: <strong>+91-866-2447799</strong>
+                </a>
+                <a href="tel:+918662447788" class="emergency-call-chip">
+                    <i class="bi bi-heart-pulse-fill"></i> Health / Ambulance: <strong>+91-866-2447788</strong>
+                </a>
+                <a href="tel:+918662447777" class="emergency-call-chip">
+                    <i class="bi bi-person-heart"></i> Women / ICC Safety: <strong>+91-866-2447777</strong>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Profile Header Card -->
+    <div class="card shadow-sm border-0 mb-4 bg-white overflow-hidden">
+        <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 58px; height: 58px;">
+                    <i class="bi bi-mortarboard-fill fs-3"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h4 class="fw-bold mb-0 text-dark" th:text="${student.fullName}">Suraj Sharma</h4>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 rounded-pill small">
+                            <i class="bi bi-check-circle-fill me-1"></i> Verified Student
+                        </span>
+                    </div>
+                    <div class="text-muted small mt-1 d-flex flex-wrap gap-2">
+                        <span><i class="bi bi-person-badge me-1"></i> <strong th:text="${student.regOrStaffId}">AP25110070893</strong></span>
+                        <span>•</span>
+                        <span><i class="bi bi-building me-1"></i> <span th:text="${student.departmentCode != null ? student.departmentCode : 'CSE'}"></span></span>
+                        <span>•</span>
+                        <span><i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                            <strong th:text="${student.buildingBlock != null ? student.buildingBlock : 'Ganga Tower - Block A'}"></strong>
+                            <span th:if="${student.roomOrZone}" th:text="'(' + ${student.roomOrZone} + ')'"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats & Edit Profile -->
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/student/profile}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill fw-semibold">
+                    <i class="bi bi-pencil-square me-1"></i> Edit Room / Profile
+                </a>
+                <div class="bg-light rounded-3 p-2 px-3 text-center border">
+                    <div class="fs-5 fw-bold text-primary" th:text="${#lists.size(tickets)}">0</div>
+                    <div class="text-muted" style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">MY GRIEVANCES</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Building-Block Incident Banner (Shared Utility Incident Detected) -->
+    <div th:each="banner : ${activeBanners}" class="card border-warning border-2 shadow-sm mb-4 bg-warning bg-opacity-10">
+        <div class="card-body p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-danger text-uppercase px-2 py-1"><i class="bi bi-broadcast me-1"></i> Active Campus Outage</span>
+                    <strong class="fs-6 text-dark" th:text="${banner.incidentTitle}">Water Outage in Ganga Tower</strong>
+                </div>
+                <div class="text-muted small">
+                    Location: <strong th:text="${banner.buildingBlock}"></strong> |
+                    Affected Students: <strong class="text-danger" th:text="${banner.affectedStudentCount}">3</strong> |
+                    Status: <span class="badge bg-info text-dark" th:text="${banner.incidentStatus}">OPEN</span>
+                    <span th:if="${banner.etaTimestamp}" class="ms-2">
+                        Expected Repair: <strong class="text-primary" th:text="${#temporals.format(banner.etaTimestamp, 'dd MMM, hh:mm a')} + ' (IST)'"></strong>
+                    </span>
+                </div>
+            </div>
+            <div>
+                <button type="button" class="btn btn-warning fw-bold text-dark shadow-sm px-3"
+                        th:data-master-id="${banner.masterIncidentId}"
+                        th:data-category-id="${banner.categoryId}"
+                        th:data-building="${banner.buildingBlock}"
+                        onclick="prefillFromBanner(this)">
+                    <i class="bi bi-hand-thumbs-up-fill me-1"></i> I am Affected Too (+1)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- LEFT COLUMN: Most Common Problems + Smart AI Box -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary p-2 rounded-circle"><i class="bi bi-pencil-fill text-white"></i></span>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">File New Grievance</h5>
+                            <small class="text-muted">Choose a common problem or type in our AI box for any issue</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Section 1: Most Common Campus Problems Grid -->
+                    <label class="form-label fw-bold text-secondary small text-uppercase mb-2">
+                        <i class="bi bi-grid-fill me-1 text-primary"></i> 1. Most Common Campus Problems (Click to select)
+                    </label>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-1" data-cat-id="1" data-cat-name="AC Not Cooling" data-default-text="My room AC is not cooling properly and blowing room temperature air." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-thermometer-snow"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">AC Not Cooling</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-2" data-cat-id="2" data-cat-name="Water Supply Cut" data-default-text="No water supply in the washroom taps since morning." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-droplet-half text-info"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Water Supply Cut</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-6" data-cat-id="6" data-cat-name="Wi-Fi / Network Issue" data-default-text="Wi-Fi connectivity is disconnecting repeatedly and portal is unreachable." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-wifi-off text-danger"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Wi-Fi / Network</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-4" data-cat-id="4" data-cat-name="Mess Food Quality" data-default-text="Food quality in today's meal was unsatisfactory and unhygienic." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-egg-fried text-warning"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Mess Food Quality</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-7" data-cat-id="7" data-cat-name="Electrical Repair" data-default-text="Tube light / ceiling fan socket is not working." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-lightning-charge text-warning"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Electrical Repair</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-5" data-cat-id="5" data-cat-name="Room Cleaning" data-default-text="Hostel room and corridor cleaning requested." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-house-heart text-success"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Room Cleaning</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-3" data-cat-id="3" data-cat-name="Water Dispenser" data-default-text="Floor drinking water RO dispenser is not dispensing cold water." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-cup-hot text-primary"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Water Dispenser</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="category-tile text-center h-100" id="tile-15" data-cat-id="15" data-cat-name="Laundry Services" data-default-text="Hostel laundry clothes not washed or delivered properly." onclick="selectCommonTile(this)">
+                                <div class="category-icon mb-1"><i class="bi bi-basket2 text-secondary"></i></div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.82rem;">Hostel Laundry</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form th:action="@{/student/tickets}" method="post" enctype="multipart/form-data" id="grievanceForm">
+                        <input type="hidden" name="categoryId" id="selectedCategoryId" value="1">
+                        <input type="hidden" name="linkedMasterIncidentId" id="linkedMasterIncidentId">
+
+                        <!-- Section 2: AI Smart Box for Any Other Problem -->
+                        <div class="p-3 bg-light rounded-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label small fw-bold text-dark mb-0">
+                                    <i class="bi bi-cpu-fill text-primary me-1"></i> 2. Or describe any problem in our Smart AI Box
+                                </label>
+                                <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 fw-semibold rounded-pill" onclick="enhanceWithAi()" id="aiEnhanceBtn" style="font-size: 0.72rem;">
+                                    Enhance with AI
+                                </button>
+                            </div>
+                            <div class="text-muted small mb-2" style="font-size: 0.75rem;">
+                                Type anything here (e.g. online harassment, ragging, exam grading, fee receipt, broken lab meter, or road debris). Campus AI auto-detects the department.
+                            </div>
+
+                            <textarea name="rawDescription" id="rawDescriptionText" class="form-control" rows="3"
+                                      placeholder="Type your issue in simple words... e.g. 'a boy is harassing me online', 'voltmeter not working in physics lab', 'leaves all over road near central library'..."
+                                      oninput="onDescriptionChanged()" required>My room AC is not cooling properly and blowing room temperature air.</textarea>
+                            <input type="hidden" name="aiEnhancedDescription" id="aiEnhancedDescription">
+
+                            <!-- AI Enhanced Preview Box -->
+                            <div id="aiPreviewBox" class="card mt-2 border-primary bg-primary bg-opacity-10 d-none">
+                                <div class="card-body p-2 small">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong class="text-primary"><i class="bi bi-stars"></i> Formally Formatted by AI:</strong>
+                                        <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" onclick="revertAiEnhancement()">Undo</button>
+                                    </div>
+                                    <div id="aiPreviewText" class="text-dark small" style="white-space: pre-line;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Intelligence Routing & Prediction Preview Card -->
+                        <div class="prediction-card p-3 mb-3 predicted" id="predictionCard">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="spinner-border spinner-border-sm text-primary d-none" id="predictionSpinner"></span>
+                                    <span class="badge bg-dark bg-opacity-75 small text-uppercase" id="predictionBadge">
+                                        <i class="bi bi-cpu me-1"></i> AI Routing Engine
+                                    </span>
+                                </div>
+                                <span class="small fw-semibold text-muted" id="predictionConfidence">Automatic Department Dispatch</span>
+                            </div>
+
+                            <!-- Confidential / Emergency Notice -->
+                            <div id="emergencyWarningBox" class="alert alert-danger p-2 mb-2 d-none small fw-bold">
+                                <i class="bi bi-shield-fill-exclamation me-1"></i>
+                                <span id="emergencyWarningText">CONFIDENTIAL / EMERGENCY NOTICE</span>
+                            </div>
+
+                            <div class="row g-2 small">
+                                <div class="col-12">
+                                    <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Responsible Department</div>
+                                    <div class="fw-bold text-dark d-flex align-items-center gap-2" id="predDeptName">
+                                        <i class="bi bi-building-check text-primary"></i> <span>Campus Life &amp; Maintenance (CLM)</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Predicted Issue Category</div>
+                                    <div class="fw-semibold text-dark" id="predCategoryName">AC Not Cooling</div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Priority &amp; SLA</div>
+                                    <div id="predPrioritySla">
+                                        <span class="badge bg-primary me-1">MEDIUM</span>
+                                        <span class="text-muted small">Ack: 240m | Res: 24h</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 pt-1 border-top mt-2">
+                                    <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Location Scope</div>
+                                    <div class="fw-semibold text-dark small" id="predLocation">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                        <span th:text="${student.buildingBlock != null ? student.buildingBlock : 'Ganga Tower - Block A'}"></span>
+                                        <span th:if="${student.roomOrZone}" th:text="'(' + ${student.roomOrZone} + ')'"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Customization Drawer (Building/Room/Photo Override) -->
+                        <div class="accordion mb-3" id="detailsAccordion">
+                            <div class="accordion-item border rounded-3 overflow-hidden">
+                                <h2 class="accordion-header" id="headingDetails">
+                                    <button class="accordion-button collapsed py-2 px-3 small fw-semibold text-secondary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDetails">
+                                        <i class="bi bi-sliders me-2"></i> Optional: Change Location or Attach Photo
+                                    </button>
+                                </h2>
+                                <div id="collapseDetails" class="accordion-collapse collapse" data-bs-parent="#detailsAccordion">
+                                    <div class="accordion-body p-3 bg-white">
+                                        <!-- Location Scope & Building Block -->
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-semibold text-secondary">Location Scope</label>
+                                                <select name="locationScope" id="locationScopeSelect" class="form-select form-select-sm">
+                                                    <option th:each="loc : ${locationScopes}" th:value="${loc}" th:text="${loc}"></option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small fw-semibold text-secondary">Building / Block</label>
+                                                <input type="text" name="buildingBlock" id="buildingBlockInput" class="form-control form-control-sm"
+                                                       list="srmapBuildingList"
+                                                       th:value="${student.buildingBlock != null ? student.buildingBlock : 'Ganga Tower - Block A'}">
+                                                <datalist id="srmapBuildingList">
+                                                    <option value="Sir J.C. Bose Academic Block">
+                                                    <option value="Central Library (Digital Learning Centre)">
+                                                    <option value="Annapoorna Mess Complex">
+                                                    <option value="Ganga Tower - Block A">
+                                                    <option value="Ganga Tower - Block B">
+                                                    <option value="Yamuna Tower">
+                                                    <option value="Krishna Tower">
+                                                    <option value="Vedavathi Tower">
+                                                    <option value="Kaveri Tower">
+                                                    <option value="Godavari Tower">
+                                                    <option value="Narmada Tower">
+                                                    <option value="North Avenue Café / Food Court">
+                                                    <option value="University Sports Complex &amp; Gym">
+                                                    <option value="Campus Main Roadway &amp; Grounds">
+                                                    <option value="Admin Block">
+                                                    <option value="Day Scholar (Non-Resident)">
+                                                </datalist>
+                                            </div>
+                                        </div>
+
+                                        <!-- Specific Room / Location -->
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-semibold text-secondary">Room / Exact Location</label>
+                                            <input type="text" name="roomOrLocation" id="roomOrLocationInput" class="form-control form-control-sm"
+                                                   th:value="${student.roomOrZone != null ? student.roomOrZone : 'Room 412'}" placeholder="e.g. G-412, Physics Lab 2, 2nd Floor Washroom">
+                                        </div>
+
+                                        <!-- Photo Proof Upload with Live Preview -->
+                                        <div>
+                                            <label class="form-label small fw-semibold text-secondary">Photo Proof (Optional)</label>
+                                            <input type="file" name="attachment" id="attachmentInput" class="form-control form-control-sm" accept="image/*,.pdf" onchange="previewImage(this)">
+                                            <div id="imagePreviewContainer" class="mt-2 d-none">
+                                                <img id="imagePreview" src="" alt="Proof Preview" class="img-thumbnail rounded" style="max-height: 100px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- One-Click Prominent Submit Button -->
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm fs-6" id="submitBtn">
+                            <i class="bi bi-send-fill me-2"></i> Submit Grievance to Responsible Team
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Central Live Tracking & Status Stepper -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 h-100 bg-white">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title fw-bold mb-0 text-dark">
+                            <i class="bi bi-activity text-primary me-2"></i> My Grievances (<span th:text="${#lists.size(tickets)}"></span>)
+                        </h5>
+                        <small class="text-muted">Track live progress in IST, chat with technicians, and confirm fixes</small>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="window.location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="card-body p-3 overflow-auto" style="max-height: 850px;">
+                    <div th:if="${#lists.isEmpty(tickets)}" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                        <h6 class="fw-bold">No Grievances Filed Yet</h6>
+                        <p class="small text-muted">Any issue you submit will appear here with live tracking and chat updates.</p>
+                    </div>
+
+                    <!-- Individual Grievance Card -->
+                    <div th:each="ticket : ${tickets}" class="card mb-3 border shadow-sm rounded-3 overflow-hidden"
+                         th:classappend="${ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION' ? 'border-warning border-2' : (ticket.status.name() == 'CLOSED' ? 'border-success-subtle bg-light bg-opacity-50' : (ticket.priority.name() == 'CRITICAL' ? 'border-danger border-2' : ''))}">
+                        
+                        <div class="card-body p-3">
+                            <!-- Card Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge bg-dark fw-semibold" th:text="${ticket.ticketReference}">SRM-2026-000001</span>
+                                    <span class="badge"
+                                          th:classappend="${ticket.priority.name() == 'CRITICAL' ? 'bg-danger' : (ticket.priority.name() == 'HIGH' ? 'bg-warning text-dark' : 'bg-secondary')}"
+                                          th:text="${ticket.priority}">MEDIUM</span>
+                                    <span th:if="${ticket.masterIncidentId}" class="badge bg-info-subtle text-info-emphasis border border-info-subtle">
+                                        <i class="bi bi-link-45deg"></i> Grouped Incident #<span th:text="${ticket.masterIncidentId}"></span>
+                                    </span>
+                                    <span th:if="${ticket.escalated}" class="badge bg-danger badge-escalated">
+                                        Level <span th:text="${ticket.escalationLevel}">1</span> Escalation
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="badge py-1 px-2"
+                                          th:classappend="${ticket.status.name() == 'CLOSED' ? 'bg-success' : (ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION' ? 'bg-warning text-dark' : (ticket.status.name() == 'REOPENED' ? 'bg-danger' : 'bg-primary'))}"
+                                          th:text="${ticket.status}">STATUS</span>
+                                </div>
+                            </div>
+
+                            <h6 class="fw-bold mb-1 text-dark" th:text="${ticket.categoryDisplayName}">Category Name</h6>
+                            <div class="small text-muted mb-2">
+                                <span>Location: <strong th:text="${ticket.buildingBlock} + ' ' + ${ticket.roomOrLocation}">Ganga Tower G-412</strong></span>
+                                <span class="ms-2">• Assigned to: <strong class="text-primary" th:text="${ticket.departmentName}">Water Department</strong></span>
+                                <span th:if="${ticket.assignedStaffName}" class="ms-1">(Staff: <span th:text="${ticket.assignedStaffName}"></span>)</span>
+                            </div>
+
+                            <p class="small text-secondary mb-2 bg-light p-2 rounded border" th:text="${ticket.rawDescription}"></p>
+
+                            <!-- 4-Stage Ticket Stepper Timeline -->
+                            <div class="ticket-stepper-wrap">
+                                <div class="ticket-stepper-bar"></div>
+                                <div class="ticket-stepper-bar-fill"
+                                     th:style="'width: ' + (${ticket.status.name() == 'SUBMITTED' ? '0%' : (ticket.status.name() == 'ACKNOWLEDGED' ? '33%' : (ticket.status.name() == 'IN_PROGRESS' || ticket.status.name() == 'REOPENED' ? '66%' : '100%'))})"></div>
+
+                                <!-- Node 1: Submitted -->
+                                <div class="stepper-node-item">
+                                    <div class="stepper-circle"
+                                         th:classappend="${ticket.status.name() != 'SUBMITTED' ? 'completed' : 'current'}">
+                                        <i th:if="${ticket.status.name() != 'SUBMITTED'}" class="bi bi-check-lg"></i>
+                                        <span th:if="${ticket.status.name() == 'SUBMITTED'}">1</span>
+                                    </div>
+                                    <span class="stepper-label">Submitted</span>
+                                </div>
+
+                                <!-- Node 2: Acknowledged -->
+                                <div class="stepper-node-item">
+                                    <div class="stepper-circle"
+                                         th:classappend="${ticket.status.name() == 'ACKNOWLEDGED' ? 'current' : (ticket.status.name() == 'SUBMITTED' ? '' : 'completed')}">
+                                        <i th:if="${ticket.status.name() == 'IN_PROGRESS' || ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION' || ticket.status.name() == 'CLOSED'}" class="bi bi-check-lg"></i>
+                                        <span th:if="${ticket.status.name() == 'SUBMITTED' || ticket.status.name() == 'ACKNOWLEDGED' || ticket.status.name() == 'REOPENED'}">2</span>
+                                    </div>
+                                    <span class="stepper-label">Acknowledged</span>
+                                </div>
+
+                                <!-- Node 3: In Progress -->
+                                <div class="stepper-node-item">
+                                    <div class="stepper-circle"
+                                         th:classappend="${ticket.status.name() == 'IN_PROGRESS' || ticket.status.name() == 'REOPENED' ? 'current' : (ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION' || ticket.status.name() == 'CLOSED' ? 'completed' : '')}">
+                                        <i th:if="${ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION' || ticket.status.name() == 'CLOSED'}" class="bi bi-check-lg"></i>
+                                        <span th:if="${ticket.status.name() != 'AWAITING_STUDENT_CONFIRMATION' && ticket.status.name() != 'CLOSED'}">3</span>
+                                    </div>
+                                    <span class="stepper-label">In Progress</span>
+                                </div>
+
+                                <!-- Node 4: Resolved / Closed -->
+                                <div class="stepper-node-item">
+                                    <div class="stepper-circle"
+                                         th:classappend="${ticket.status.name() == 'CLOSED' ? 'completed' : (ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION' ? 'current' : '')}">
+                                        <i th:if="${ticket.status.name() == 'CLOSED'}" class="bi bi-check-lg"></i>
+                                        <span th:if="${ticket.status.name() != 'CLOSED'}">4</span>
+                                    </div>
+                                    <span class="stepper-label" th:text="${ticket.status.name() == 'CLOSED' ? 'Closed' : 'Confirmation'}">Confirmation</span>
+                                </div>
+                            </div>
+
+                            <!-- Two-Way Resolution Handshake Alert (Action Required by Student) -->
+                            <div th:if="${ticket.status.name() == 'AWAITING_STUDENT_CONFIRMATION'}"
+                                 class="alert alert-warning p-3 my-2 border-warning shadow-sm rounded-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <strong class="text-dark small">
+                                        <i class="bi bi-bell-fill text-warning me-1"></i> Department completed work. Is the problem resolved?
+                                    </strong>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-success btn-sm flex-grow-1 fw-bold shadow-sm"
+                                            th:data-ticket-id="${ticket.ticketId}"
+                                            onclick="openConfirmModal(this)">
+                                        <i class="bi bi-check-circle-fill me-1"></i> Confirm Fixed
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm flex-grow-1 fw-bold"
+                                            th:data-ticket-id="${ticket.ticketId}"
+                                            onclick="openReopenModalFromBtn(this)">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> Still Not Fixed
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Rating Display (If Ticket is Closed with Rating) -->
+                            <div th:if="${ticket.studentRating != null}" class="text-success small my-1">
+                                <span class="fw-bold">Your Rating:</span>
+                                <span th:each="star : ${#numbers.sequence(1, ticket.studentRating)}">⭐</span>
+                                <span th:if="${ticket.studentFeedback}" class="text-muted fst-italic ms-1" th:text="'“' + ${ticket.studentFeedback} + '”'"></span>
+                            </div>
+
+                            <!-- Card Footer: Live Chat Button & Timestamp in IST -->
+                            <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top small text-muted">
+                                <span>
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    Filed: <strong class="text-dark" th:text="${#temporals.format(ticket.createdAt, 'dd MMM, hh:mm a')} + ' (IST)'"></strong>
+                                </span>
+                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-3 rounded-pill fw-semibold"
+                                        th:data-ticket-id="${ticket.ticketId}"
+                                        th:data-ticket-ref="${ticket.ticketReference}"
+                                        onclick="openChatFromBtn(this)">
+                                    <i class="bi bi-chat-dots-fill me-1"></i> Live Chat &amp; Updates
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 1: Confirm Fixed with Star Rating -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form id="confirmForm" method="post">
+                <div class="modal-header bg-success text-white">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i> Confirm Fix &amp; Close Ticket</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-emoji-smile-fill text-success fs-1"></i>
+                        <h5 class="fw-bold mt-2">Glad to hear it is fixed!</h5>
+                        <p class="small text-muted mb-3">Please rate your satisfaction with the campus service:</p>
+
+                        <!-- Star Rating Radio Group -->
+                        <div class="star-rating mb-3">
+                            <input type="radio" id="star5" name="rating" value="5" checked><label for="star5" class="bi bi-star-fill"></label>
+                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" class="bi bi-star-fill"></label>
+                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" class="bi bi-star-fill"></label>
+                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" class="bi bi-star-fill"></label>
+                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" class="bi bi-star-fill"></label>
+                        </div>
+                    </div>
+
+                    <div class="text-start">
+                        <label class="form-label small fw-semibold text-secondary">Optional Comments</label>
+                        <textarea name="feedback" class="form-control" rows="2" placeholder="e.g. Technician arrived on time and resolved the issue."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success btn-sm px-4 fw-bold">Confirm &amp; Close Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Reopen Ticket (Still Not Fixed) -->
+<div class="modal fade" id="reopenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form id="reopenForm" method="post">
+                <div class="modal-header bg-danger text-white">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Reject Fix &amp; Reopen Ticket</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="small text-muted mb-2">Please explain what is still broken so the department supervisor can intervene:</p>
+                    <textarea name="rejectionReason" class="form-control" rows="3" placeholder="e.g. Water is still leaking from the pipe / cooling didn't start..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-3 fw-bold">Reopen Ticket</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 3: Live 2.5-Second Polling Conversation Modal -->
+<div class="modal fade" id="chatModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h6 class="modal-title fw-bold">
+                    <i class="bi bi-chat-dots-fill me-2"></i> Conversation: <span id="modalTicketRef"></span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body whatsapp-chat-bg p-3" id="chatMessagesContainer" style="min-height: 350px;">
+                <div class="text-center text-muted small py-4" id="chatLoading">
+                    <div class="spinner-border spinner-border-sm me-1 text-primary"></div> Loading updates...
+                </div>
+            </div>
+            <div class="modal-footer p-2 bg-white border-top">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control" placeholder="Type a message to department..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+                    <button class="btn btn-primary" type="button" onclick="sendChatMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let activeChatTicketId = null;
+    let chatPollInterval = null;
+    let debounceTimer = null;
+
+    function selectCommonTile(el) {
+        document.querySelectorAll('.category-tile').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+
+        const catId = el.getAttribute('data-cat-id');
+        const defaultText = el.getAttribute('data-default-text');
+
+        document.getElementById('selectedCategoryId').value = catId;
+        const textarea = document.getElementById('rawDescriptionText');
+        textarea.value = defaultText;
+
+        onDescriptionChanged();
+    }
+
+    function onDescriptionChanged() {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        const text = document.getElementById('rawDescriptionText').value.trim();
+        if (!text) {
+            resetPredictionCard();
+            return;
+        }
+
+        document.getElementById('predictionSpinner').classList.remove('d-none');
+        debounceTimer = setTimeout(() => {
+            fetchPrediction(text);
+        }, 250);
+    }
+
+    async function fetchPrediction(text) {
+        try {
+            const resp = await fetch('/api/predict-issue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: text })
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                renderPrediction(data);
+            }
+        } catch (e) {
+            console.error('Prediction failed', e);
+        } finally {
+            document.getElementById('predictionSpinner').classList.add('d-none');
+        }
+    }
+
+    function renderPrediction(data) {
+        const card = document.getElementById('predictionCard');
+        const submitBtn = document.getElementById('submitBtn');
+        const warningBox = document.getElementById('emergencyWarningBox');
+        const warningText = document.getElementById('emergencyWarningText');
+
+        // Populate hidden category field
+        if (data.categoryId) {
+            document.getElementById('selectedCategoryId').value = data.categoryId;
+            // Also highlight matching tile if exists
+            document.querySelectorAll('.category-tile').forEach(t => t.classList.remove('active'));
+            const matchingTile = document.getElementById('tile-' + data.categoryId);
+            if (matchingTile) matchingTile.classList.add('active');
+        }
+
+        // Target Dept Name
+        document.getElementById('predDeptName').innerHTML = `<i class="bi bi-building-check text-primary"></i> <span>${escapeHtml(data.targetDeptName || 'Campus Administration')}</span>`;
+
+        // Category Name
+        document.getElementById('predCategoryName').innerText = data.categoryDisplayName || 'Campus Issue';
+
+        // Location
+        if (data.buildingBlock) {
+            document.getElementById('predLocation').innerHTML = `<i class="bi bi-geo-alt-fill text-danger me-1"></i> <span>${escapeHtml(data.buildingBlock)}</span> ${data.roomOrLocation ? '<span>(' + escapeHtml(data.roomOrLocation) + ')</span>' : ''}`;
+            document.getElementById('buildingBlockInput').value = data.buildingBlock;
+            if (data.roomOrLocation) {
+                document.getElementById('roomOrLocationInput').value = data.roomOrLocation;
+            }
+        }
+
+        // Priority & SLA
+        let priorityClass = 'bg-secondary';
+        if (data.priority === 'CRITICAL') priorityClass = 'bg-danger';
+        else if (data.priority === 'HIGH') priorityClass = 'bg-warning text-dark';
+        else if (data.priority === 'MEDIUM') priorityClass = 'bg-primary';
+
+        document.getElementById('predPrioritySla').innerHTML = `
+            <span class="badge ${priorityClass} me-1">${escapeHtml(data.priority || 'MEDIUM')}</span>
+            <span class="text-muted small">Ack: ${data.ackMinutes}m | Res: ${Math.round(data.resolutionMinutes / 60)}h</span>
+        `;
+
+        // Check if Harassment / ICC (Category 18)
+        if (data.categoryCode === 'CYBER_HARASSMENT') {
+            card.className = 'prediction-card p-3 mb-3 confidential';
+            warningBox.className = 'alert alert-danger p-2 mb-2 small fw-bold';
+            warningBox.classList.remove('d-none');
+            warningText.innerText = data.emergencyActionNotice || '🔒 CONFIDENTIAL REPORT REGISTERED: Internal Complaints Committee (ICC) & Women Cell notified under UGC/POSH regulations.';
+
+            submitBtn.className = 'btn btn-confidential-pulse w-100 py-3 fw-bold shadow fs-6';
+            submitBtn.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i> Submit Confidential Report to ICC / Women Cell';
+        } else if (data.emergency) {
+            // General Emergency (Snake, Fire, Medical, Ragging)
+            card.className = 'prediction-card p-3 mb-3 emergency';
+            warningBox.className = 'alert alert-danger p-2 mb-2 small fw-bold';
+            warningBox.classList.remove('d-none');
+            warningText.innerText = data.emergencyActionNotice || '🚨 CRITICAL EMERGENCY DETECTED: Priority Rapid Dispatch';
+
+            submitBtn.className = 'btn btn-danger btn-emergency-pulse w-100 py-3 fw-bold shadow fs-6';
+            submitBtn.innerHTML = '<i class="bi bi-shield-fill-exclamation me-2"></i> 🚨 DISPATCH EMERGENCY SOS REPORT';
+        } else {
+            card.className = 'prediction-card p-3 mb-3 predicted';
+            warningBox.classList.add('d-none');
+
+            submitBtn.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm fs-6';
+            submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i> Submit Grievance to Responsible Team';
+        }
+    }
+
+    function resetPredictionCard() {
+        const card = document.getElementById('predictionCard');
+        card.className = 'prediction-card p-3 mb-3';
+        document.getElementById('predDeptName').innerHTML = '<i class="bi bi-building text-primary"></i> <span>Campus Life &amp; Maintenance (CLM)</span>';
+        document.getElementById('predCategoryName').innerText = 'AC Not Cooling';
+        document.getElementById('predPrioritySla').innerHTML = '<span class="badge bg-primary me-1">MEDIUM</span><span class="text-muted small">Ack: 240m | Res: 24h</span>';
+        document.getElementById('emergencyWarningBox').classList.add('d-none');
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm fs-6';
+        submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i> Submit Grievance to Responsible Team';
+    }
+
+    function prefillFromBanner(btn) {
+        const masterId = btn.getAttribute('data-master-id');
+        const catId = btn.getAttribute('data-category-id');
+        const building = btn.getAttribute('data-building');
+
+        document.getElementById('linkedMasterIncidentId').value = masterId;
+        document.getElementById('selectedCategoryId').value = catId;
+
+        if (building) {
+            document.getElementById('buildingBlockInput').value = building;
+        }
+        const text = "I am also experiencing this campus outage in " + building + ". Please include my room in the repairs.";
+        document.getElementById('rawDescriptionText').value = text;
+        onDescriptionChanged();
+        document.getElementById('grievanceForm').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function enhanceWithAi() {
+        const text = document.getElementById('rawDescriptionText').value;
+        const block = document.getElementById('buildingBlockInput').value;
+        const room = document.getElementById('roomOrLocationInput').value;
+
+        if (!text || text.trim() === '') {
+            alert('Please type what you noticed first before enhancing.');
+            return;
+        }
+
+        const btn = document.getElementById('aiEnhanceBtn');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Formatting...';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch('/api/enhance-ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    categoryDisplayName: 'Reported Issue',
+                    buildingBlock: block,
+                    roomOrLocation: room,
+                    rawStudentText: text
+                })
+            });
+            const data = await resp.json();
+            if (data.enhancedText) {
+                document.getElementById('aiEnhancedDescription').value = data.enhancedText;
+                document.getElementById('aiPreviewText').innerText = data.enhancedText;
+                document.getElementById('aiPreviewBox').classList.remove('d-none');
+            }
+        } catch (e) {
+            console.error('AI enhance failed', e);
+        } finally {
+            btn.innerHTML = 'Enhance with AI';
+            btn.disabled = false;
+        }
+    }
+
+    function revertAiEnhancement() {
+        document.getElementById('aiEnhancedDescription').value = '';
+        document.getElementById('aiPreviewBox').classList.add('d-none');
+    }
+
+    function previewImage(input) {
+        const container = document.getElementById('imagePreviewContainer');
+        const img = document.getElementById('imagePreview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                container.classList.remove('d-none');
+            };
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+
+    function openConfirmModal(btn) {
+        const ticketId = btn.getAttribute('data-ticket-id');
+        document.getElementById('confirmForm').action = '/student/tickets/' + ticketId + '/confirm';
+        new bootstrap.Modal(document.getElementById('confirmModal')).show();
+    }
+
+    function openReopenModalFromBtn(btn) {
+        const ticketId = btn.getAttribute('data-ticket-id');
+        document.getElementById('reopenForm').action = '/student/tickets/' + ticketId + '/reopen';
+        new bootstrap.Modal(document.getElementById('reopenModal')).show();
+    }
+
+    function openChatFromBtn(btn) {
+        const ticketId = btn.getAttribute('data-ticket-id');
+        const ticketRef = btn.getAttribute('data-ticket-ref');
+        activeChatTicketId = ticketId;
+        document.getElementById('modalTicketRef').innerText = ticketRef;
+
+        const modal = new bootstrap.Modal(document.getElementById('chatModal'));
+        modal.show();
+
+        fetchMessages();
+        if (chatPollInterval) clearInterval(chatPollInterval);
+        chatPollInterval = setInterval(fetchMessages, 2500);
+
+        document.getElementById('chatModal').addEventListener('hidden.bs.modal', () => {
+            if (chatPollInterval) clearInterval(chatPollInterval);
+        });
+    }
+
+    async function fetchMessages() {
+        if (!activeChatTicketId) return;
+        try {
+            const resp = await fetch('/api/tickets/' + activeChatTicketId + '/messages');
+            if (resp.ok) {
+                const messages = await resp.json();
+                renderMessages(messages);
+            }
+        } catch (e) {
+            console.error('Message polling failed', e);
+        }
+    }
+
+    function renderMessages(messages) {
+        const container = document.getElementById('chatMessagesContainer');
+        if (messages.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted small py-4">No messages yet. Send a note to the department.</div>';
+            return;
+        }
+
+        let html = '';
+        for (const m of messages) {
+            if (m.systemAlert) {
+                html += `<div class="chat-bubble-alert my-2 text-center text-dark bg-warning-subtle border border-warning-subtle p-2 rounded small">🔔 ${escapeHtml(m.messageBody)}</div>`;
+            } else if (m.senderRole === 'ROLE_STUDENT') {
+                html += `<div class="d-flex justify-content-start my-2">
+                           <div class="bubble-student">
+                             <div class="fw-bold small text-primary">${escapeHtml(m.senderName || 'You')}</div>
+                             <div>${escapeHtml(m.messageBody)}</div>
+                           </div>
+                         </div>`;
+            } else {
+                html += `<div class="d-flex justify-content-end my-2">
+                           <div class="bubble-staff">
+                             <div class="fw-bold small text-success">${escapeHtml(m.senderName || 'Department')}</div>
+                             <div>${escapeHtml(m.messageBody)}</div>
+                           </div>
+                         </div>`;
+            }
+        }
+        container.innerHTML = html;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text || !activeChatTicketId) return;
+
+        try {
+            await fetch('/api/tickets/' + activeChatTicketId + '/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticketId: activeChatTicketId, messageBody: text })
+            });
+            input.value = '';
+            fetchMessages();
+        } catch (e) {
+            console.error('Send message failed', e);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        return div.innerHTML;
+    }
+
+    // Set first tile active initially
+    window.addEventListener('DOMContentLoaded', () => {
+        const tile1 = document.getElementById('tile-1');
+        if (tile1) tile1.classList.add('active');
+    });
+</script>
+</body>
+</html>

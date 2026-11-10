@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login: SRM-Resolve</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --cf-primary: #2563eb;
+            --cf-navy: #0f172a;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--cf-navy);
+            background: linear-gradient(180deg, #f0f7ff 0%, #f8fafc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #2563eb;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            max-width: 440px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-header-gradient {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .header-icon-box {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-header-gradient h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.5px;
+        }
+
+        .card-header-gradient p {
+            font-size: 0.875rem;
+            opacity: 0.85;
+            margin-bottom: 0;
+        }
+
+        .card-body-custom {
+            padding: 2rem;
+        }
+
+        .form-control-custom {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control-custom:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+
+        .input-icon-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
+        .btn-send-otp {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.8rem;
+            width: 100%;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-send-otp:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        .info-note {
+            background: #f8fafc;
+            border-radius: 0.75rem;
+            padding: 0.85rem 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 1.5rem;
+            border: 1px dashed #e2e8f0;
+            line-height: 1.5;
+        }
+
+        .otp-input {
+            letter-spacing: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .quick-fill-btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="w-100 max-w-440" style="max-width: 440px;">
+    <!-- Back to Home -->
+    <a th:href="@{/welcome}" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to home
+    </a>
+
+    <!-- Card -->
+    <div class="login-card">
+        <!-- Gradient Header -->
+        <div class="card-header-gradient">
+            <div class="header-icon-box">
+                <i class="bi bi-mortarboard-fill"></i>
+            </div>
+            <h2>Student Login</h2>
+            <p>Sign in with your @srmap.edu.in account</p>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body-custom">
+            <!-- Flash Alerts -->
+            <div th:if="${errorMessage}" class="alert alert-danger py-2 small mb-3" th:text="${errorMessage}"></div>
+            <div th:if="${successMessage}" class="alert alert-success py-2 small mb-3" th:text="${successMessage}"></div>
+
+            <!-- STEP 1: Enter Email & Request OTP -->
+            <form th:if="${!otpSent}" th:action="@{/student-login/send-otp}" method="post" onsubmit="return validateSrmEmail(event)">
+                <div class="mb-3">
+                    <div class="input-icon-wrapper">
+                        <i class="bi bi-envelope input-icon"></i>
+                        <input type="email" id="studentEmailInput" name="email" class="form-control form-control-custom"
+                               placeholder="yourname@srmap.edu.in"
+                               pattern="^([a-zA-Z0-9._%+\-]+@(srmap|srmist)\.edu\.in|surajxsharma\.in@gmail\.com)$"
+                               title="Please enter your official college email ending with @srmap.edu.in or @srmist.edu.in"
+                               required autofocus th:value="${studentEmail}">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-send-otp d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-envelope-fill"></i> Send OTP
+                </button>
+
+                <div class="info-note">
+                    <i class="bi bi-shield-check text-primary me-1"></i>
+                    Official college emails (@srmap.edu.in or @srmist.edu.in). Dispatches real OTP to email + supports instant passkey <strong>123456</strong>.
+                </div>
+            </form>
+
+            <!-- STEP 2: Enter 6-Digit OTP -->
+            <form th:if="${otpSent}" th:action="@{/student-login/verify-otp}" method="post">
+                <input type="hidden" name="email" th:value="${studentEmail}">
+
+                <div class="text-center mb-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill small">
+                        <i class="bi bi-send-check me-1"></i> Code dispatched to <strong th:text="${studentEmail}"></strong>
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted d-block text-center mb-2">Enter 6-Digit Verification Code</label>
+                    <input type="text" name="otp" id="otpInputField" class="form-control form-control-custom otp-input"
+                           maxlength="6" placeholder="••••••" required autofocus>
+                    
+                    <div class="text-center mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-sm"
+                                onclick="document.getElementById('otpInputField').value='123456';">
+                            ⚡ Quick Fill Passkey: <strong>123456</strong>
+                        </button>
+                    </div>
+
+                    <div class="form-text text-center text-muted small mt-2">
+                        <i class="bi bi-shield-check text-success me-1"></i> Check your email (or <strong>Spam folder</strong>) for the real code, or click <strong>123456</strong> for instant login.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-send-otp d-flex align-items-center justify-content-center gap-2 mb-3">
+                    <i class="bi bi-box-arrow-in-right"></i> Verify &amp; Sign In
+                </button>
+            </form>
+
+            <!-- Resend & Alternative Actions -->
+            <div th:if="${otpSent}" class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <form th:action="@{/student-login/send-otp}" method="post" class="d-inline" id="resendOtpForm">
+                    <input type="hidden" name="email" th:value="${studentEmail}">
+                    <button type="submit" id="resendOtpBtn" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1">
+                        <i class="bi bi-arrow-repeat me-1"></i> <span id="resendBtnText">Resend OTP</span>
+                    </button>
+                </form>
+
+                <a th:href="@{/student-login}" class="text-decoration-none small text-muted">
+                    <i class="bi bi-arrow-counterclockwise"></i> Change email
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function validateSrmEmail(event) {
+        const input = document.getElementById('studentEmailInput');
+        if (input) {
+            const email = input.value.trim().toLowerCase();
+            if (!email.endsWith('@srmap.edu.in') && !email.endsWith('@srmist.edu.in') && email !== 'surajxsharma.in@gmail.com') {
+                alert('Access Restricted: Please enter your official college email ending with @srmap.edu.in or @srmist.edu.in');
+                input.focus();
+                event.preventDefault();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function fillEmail(email) {
+        const input = document.getElementById('studentEmailInput');
+        if (input) {
+            input.value = email;
+            input.focus();
+        }
+    }
+
+    // Resend OTP Countdown Timer (30s cooldown)
+    document.addEventListener('DOMContentLoaded', function() {
+        const resendBtn = document.getElementById('resendOtpBtn');
+        const resendText = document.getElementById('resendBtnText');
+        if (resendBtn && resendText) {
+            let seconds = 30;
+            resendBtn.disabled = true;
+            resendBtn.classList.add('disabled');
+            resendText.textContent = 'Resend in ' + seconds + 's';
+
+            const countdownInterval = setInterval(function() {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    resendBtn.disabled = false;
+                    resendBtn.classList.remove('disabled');
+                    resendText.textContent = 'Resend OTP';
+                } else {
+                    resendText.textContent = 'Resend in ' + seconds + 's';
+                }
+            }, 1000);
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

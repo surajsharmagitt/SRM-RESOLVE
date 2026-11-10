@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRM-Resolve: Campus Infrastructure Made Accountable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --cf-primary: #2563eb;
+            --cf-primary-hover: #1d4ed8;
+            --cf-navy: #0f172a;
+            --cf-gray: #64748b;
+            --cf-light-bg: #f8fafc;
+            --cf-card-border: #e2e8f0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--cf-navy);
+            background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 40%, #f8fafc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .welcome-navbar {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .brand-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--cf-navy);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-section {
+            padding: 5rem 1rem 3.5rem;
+            text-align: center;
+        }
+
+        .platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+            padding: 0.4rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+        }
+
+        .hero-title {
+            font-size: clamp(2.25rem, 5vw, 3.75rem);
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            max-width: 820px;
+            margin: 0 auto 1.25rem;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--cf-gray);
+            max-width: 650px;
+            margin: 0 auto 2.25rem;
+            line-height: 1.6;
+        }
+
+        .btn-student-login {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff !important;
+            padding: 0.95rem 2.75rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            border: none;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.35);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .btn-student-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px -6px rgba(37, 99, 235, 0.45);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        }
+
+        .email-subtext {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+
+        .section-label {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 2.5rem;
+        }
+
+        .feature-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: #cbd5e1;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.07);
+        }
+
+        .icon-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0;
+        }
+
+        .feature-desc {
+            font-size: 0.925rem;
+            color: #64748b;
+            line-height: 1.55;
+            margin-bottom: 0;
+        }
+
+        .footer-custom {
+            margin-top: auto;
+            border-top: 1px solid #e2e8f0;
+            background: #ffffff;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+
+
+<!-- Header / Navigation Bar -->
+<header class="welcome-navbar sticky-top">
+    <div class="container d-flex align-items-center justify-content-between py-3 px-3 px-md-4">
+        <!-- Logo -->
+        <a th:href="@{/welcome}" class="brand-pill">
+            <span class="fs-4">🏛️</span>
+            <div>
+                <span class="fw-extrabold text-primary" style="font-weight: 800; letter-spacing: -0.5px;">SRM-RESOLVE</span>
+                <span class="badge bg-light text-primary border ms-1" style="font-size: 0.65rem; vertical-align: middle;">Official Portal</span>
+            </div>
+        </a>
+
+        <!-- Right Action Links -->
+        <div class="d-flex align-items-center gap-2 gap-md-3">
+            <div th:if="${authenticated}" class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border px-3 py-2 small">
+                    <i class="bi bi-person-check-fill text-success me-1"></i>
+                    Signed in: <strong th:text="${currentUsername}">User</strong>
+                </span>
+                <form th:action="@{/auth/logout}" method="post" class="d-inline m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-semibold">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                    </button>
+                </form>
+            </div>
+            <a th:if="${!authenticated}" th:href="@{/authority-login}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold">
+                <i class="bi bi-key-fill me-1"></i> Authority Login
+            </a>
+            <a th:if="${!authenticated}" th:href="@{/admin-login}" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-semibold">
+                <i class="bi bi-shield-lock-fill me-1"></i> Admin Login
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Hero Section -->
+<main class="hero-section container">
+    <div class="platform-badge">
+        <i class="bi bi-lightning-charge-fill"></i> Smart Campus Platform
+    </div>
+
+    <h1 class="hero-title">
+        Campus Infrastructure<br>Made Accountable
+    </h1>
+
+    <p class="hero-subtitle">
+        Report broken lights, leaky taps, faulty furniture and more: right from your phone.
+        The right department team gets notified instantly with SLA tracking.
+    </p>
+
+    <div>
+        <a th:href="@{/student-login}" class="btn-student-login">
+            <i class="bi bi-mortarboard-fill fs-5"></i> Student Login &rarr;
+        </a>
+    </div>
+
+    <p class="email-subtext">
+        Use your <span class="fw-semibold text-dark">@srmap.edu.in</span> email · Instant OTP verification
+    </p>
+</main>
+
+<!-- Feature Showcase Section -->
+<section class="container mb-5 pb-5">
+    <div class="section-label">Everything You Need</div>
+
+    <div class="feature-grid">
+        <div class="row g-4">
+            <!-- 1. Report Issues -->
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="icon-circle" style="background-color: #eff6ff; color: #2563eb;">
+                        <i class="bi bi-wrench-adjustable"></i>
+                    </div>
+                    <h3 class="feature-title">Report Issues</h3>
+                    <p class="feature-desc">Submit infrastructure complaints with photos and AI-assisted descriptions in seconds.</p>
+                </div>
+            </div>
+
+            <!-- 2. Track Progress -->
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="icon-circle" style="background-color: #fef3c7; color: #d97706;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h3 class="feature-title">Track Progress</h3>
+                    <p class="feature-desc">Real-time status updates and WhatsApp-style technician chat on every complaint you raise.</p>
+                </div>
+            </div>
+
+            <!-- 3. Get Resolved -->
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="icon-circle" style="background-color: #dcfce7; color: #16a34a;">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Get Resolved</h3>
+                    <p class="feature-desc">Two-way resolution handshake: tickets only close once you verify and confirm the repair.</p>
+                </div>
+            </div>
+
+            <!-- 4. Stay Updated -->
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="icon-circle" style="background-color: #f3e8ff; color: #9333ea;">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Stay Updated</h3>
+                    <p class="feature-desc">Know instantly when your complaint moves from Submitted to Acknowledged, In Progress, and Resolved.</p>
+                </div>
+            </div>
+
+            <!-- 5. Pin Locations -->
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="icon-circle" style="background-color: #ffe4e6; color: #e11d48;">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Pin Locations</h3>
+                    <p class="feature-desc">Specify hostel tower, floor, room number, or academic zone for precise technician dispatch.</p>
+                </div>
+            </div>
+
+            <!-- 6. View Analytics -->
+            <div class="col-md-6 col-lg-4">
+                <div class="feature-card">
+                    <div class="icon-circle" style="background-color: #ccfbf1; color: #0d9488;">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3 class="feature-title">View Analytics</h3>
+                    <p class="feature-desc">Institutional anomaly radar highlights recurring utility failures and SLA compliance across campus.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer with Official SRM University-AP Details -->
+<footer class="footer-custom">
+    <div class="container">
+        <div class="row g-4 text-start mb-4">
+            <div class="col-md-5">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fs-4">🏛️</span>
+                    <strong class="fs-6 text-dark">SRM University-AP, Andhra Pradesh</strong>
+                </div>
+                <p class="small text-secondary mb-2">
+                    Neerukonda, Mangalagiri Mandal, Guntur District, Andhra Pradesh - 522240, India
+                </p>
+                <div class="small text-muted">
+                    <span><i class="bi bi-telephone-fill me-1"></i> +91-866-2447700</span>
+                    <span class="mx-2">•</span>
+                    <span><i class="bi bi-headset me-1"></i> Helpdesk: 080-6988-6999</span>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <h6 class="fw-bold text-dark mb-2">Campus Directorates</h6>
+                <ul class="list-unstyled small text-muted mb-0">
+                    <li class="mb-1"><i class="bi bi-building me-1"></i> Campus Life &amp; Maintenance (CLM)</li>
+                    <li class="mb-1"><i class="bi bi-wifi me-1"></i> IT &amp; Knowledge Management (ITKM)</li>
+                    <li class="mb-1"><i class="bi bi-cup-hot me-1"></i> Annapoorna Dining Committee</li>
+                    <li class="mb-1"><i class="bi bi-mortarboard me-1"></i> Directorate of Student Affairs (DSA)</li>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                <h6 class="fw-bold text-dark mb-2">Grievance &amp; Redressal Cells</h6>
+                <ul class="list-unstyled small text-muted mb-0">
+                    <li class="mb-1">• Students Grievance Redressal Committee (SGRC)</li>
+                    <li class="mb-1">• Internal Committee (ICC): <code>icc@srmap.edu.in</code></li>
+                    <li class="mb-1">• 200-Acre Master Planned Green Campus</li>
+                    <li class="mb-1">• Residential Towers: Ganga, Yamuna, Krishna, Vedavathi, Kaveri, Godavari, Narmada</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="border-top pt-3 text-center">
+            <p class="mb-1 fw-semibold text-secondary">&copy; 2026 SRM University-AP &middot; SRM-Resolve Institutional Infrastructure Platform</p>
+            <p class="mb-0 small text-muted">Developed for Smart Campus Operations, Incident Grouping &amp; Student Welfare Redressal</p>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

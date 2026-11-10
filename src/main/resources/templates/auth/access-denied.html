@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Access Notice: SRM-Resolve</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/theme.css}">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, #f0f7ff 0%, #f8fafc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .notice-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            max-width: 620px;
+            margin: 4rem auto;
+            width: 100%;
+        }
+        .notice-header {
+            background: linear-gradient(135deg, #002147 0%, #00152e 100%);
+            color: #ffffff;
+            padding: 2.25rem 2rem 2rem;
+            text-align: center;
+        }
+        .notice-icon-box {
+            width: 64px;
+            height: 64px;
+            border-radius: 1.25rem;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar('none')}"></div>
+
+<main class="container px-3">
+    <div class="notice-card">
+        <div class="notice-header">
+            <div class="notice-icon-box text-warning">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h3 class="fw-bold mb-1" th:text="${statusCode == 404 ? 'Page Not Found' : (statusCode == 403 ? 'Institutional Role Access Notice' : 'System Notice')}">
+                Institutional Role Access Notice
+            </h3>
+            <p class="text-white-50 small mb-0">SRM University-AP Campus Infrastructure Platform</p>
+        </div>
+
+        <div class="p-4 p-md-5">
+            <!-- 403 Forbidden with active session -->
+            <div th:if="${currentUsername != null}">
+                <div class="alert alert-light border p-3 rounded-3 mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-person-badge-fill text-primary fs-5"></i>
+                        <span class="small text-muted">Currently Authenticated As:</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <strong class="fs-6 text-dark" th:text="${currentUsername}">User</strong>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2" th:text="${currentUserRole}">ROLE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-secondary small mb-4">
+                    The requested area is restricted to a different institutional role. Each portal (Student Grievances, Department Hub, Executive Leadership Radar) is isolated to ensure data privacy and official compliance.
+                </p>
+
+                <div class="d-grid gap-2">
+                    <a th:href="@{${dashboardUrl}}" class="btn btn-primary py-2 fw-semibold rounded-pill shadow-sm">
+                        <i class="bi bi-arrow-right-circle-fill me-1"></i> Proceed to <span th:text="${dashboardLabel}">Authorized Portal</span>
+                    </a>
+
+                    <form th:action="@{/auth/logout}" method="post" class="mt-2">
+                        <button type="submit" class="btn btn-outline-danger w-100 py-2 fw-semibold rounded-pill">
+                            <i class="bi bi-box-arrow-right me-1"></i> Sign Out &amp; Switch Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Generic or unauthenticated error -->
+            <div th:if="${currentUsername == null}">
+                <p class="text-secondary mb-4" th:text="${errorMessage != null ? errorMessage : 'Your session may have expired or you do not have permission to access this page.'}">
+                    Please sign in with your official SRM University-AP credentials to continue.
+                </p>
+
+                <div class="d-grid gap-2">
+                    <a th:href="@{/welcome}" class="btn btn-primary py-2 fw-semibold rounded-pill shadow-sm">
+                        <i class="bi bi-house-door-fill me-1"></i> Return to Campus Home
+                    </a>
+                    <a th:href="@{/student-login}" class="btn btn-outline-primary py-2 fw-semibold rounded-pill">
+                        <i class="bi bi-mortarboard-fill me-1"></i> Student Login (OTP)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Incognito Tip Alert -->
+            <div class="mt-4 p-3 bg-light rounded-3 border small text-muted">
+                <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                <strong>Tip for Multi-Role Testing:</strong> To test the <strong>Student Portal</strong> and <strong>Department Hub / VC Radar</strong> simultaneously without session conflicts, open one role in an <strong>Incognito / Private Window</strong> (<code>Cmd+Shift+N</code> on Mac).
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

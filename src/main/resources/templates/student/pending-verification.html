@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Pending Verification: SRM-Resolve</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-light min-vh-100 d-flex flex-column">
+
+<div th:replace="~{fragments/navbar :: navbar('student')}"></div>
+
+<div class="container my-auto py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10 text-warning-emphasis border-warning text-center py-3">
+                    <i class="bi bi-hourglass-split fs-1 d-block mb-2"></i>
+                    <h4 class="card-title fw-bold mb-0">Account Pending Verification</h4>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <p class="text-muted">
+                        Hello, <strong th:text="${student.fullName}"></strong> (<span th:text="${student.regOrStaffId}"></span>)!
+                    </p>
+                    <p>
+                        Your email was verified via OTP, but your registration details could not be automatically matched against the official institutional directory roster.
+                    </p>
+                    <div class="alert alert-info text-start small">
+                        <i class="bi bi-shield-lock-fill me-2"></i>
+                        <strong>Security Policy Notice (Section 6.6):</strong> To prevent unauthorized complaint submissions, your account requires administrator approval before you can file campus grievances.
+                    </div>
+                    <p class="text-muted small mb-4">
+                        Campus administrators review pending registrations regularly. Once approved, your account will immediately have full access to file and track campus issues.
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="/student/dashboard" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Refresh Status
+                        </a>
+                        <form th:action="@{/auth/logout}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="bi bi-box-arrow-right me-1"></i> Logout
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

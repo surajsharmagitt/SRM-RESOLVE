@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Student Profile: SRM-Resolve</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --cf-primary: #2563eb;
+            --cf-primary-hover: #1d4ed8;
+            --cf-navy: #0f172a;
+            --cf-slate: #64748b;
+            --cf-border: #e2e8f0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--cf-navy);
+            background: linear-gradient(180deg, #f0f7ff 0%, #f8fafc 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-container {
+            max-width: 680px;
+            width: 100%;
+            margin: 2.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .profile-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.04);
+            border: 1px solid var(--cf-border);
+            overflow: hidden;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+            color: #ffffff;
+            padding: 2.25rem 2rem 2rem;
+            text-align: center;
+        }
+
+        .header-icon-box {
+            width: 58px;
+            height: 58px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .profile-header h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+            letter-spacing: -0.5px;
+        }
+
+        .profile-header p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .profile-body {
+            padding: 2.25rem 2rem;
+        }
+
+        .section-badge-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.825rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            color: var(--cf-primary);
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label-custom {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control-custom, .form-select-custom {
+            border: 1px solid var(--cf-border);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: var(--cf-navy);
+            transition: all 0.2s ease;
+        }
+
+        .form-control-custom:focus, .form-select-custom:focus {
+            border-color: var(--cf-primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+
+        .input-group-custom {
+            position: relative;
+        }
+
+        .input-group-custom .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .input-group-custom input {
+            padding-left: 2.75rem;
+        }
+
+        .btn-save-profile {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            font-weight: 700;
+            border: none;
+            border-radius: 0.85rem;
+            padding: 0.95rem;
+            font-size: 1.05rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.35);
+        }
+
+        .btn-save-profile:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px -4px rgba(37, 99, 235, 0.45);
+        }
+
+        .info-box {
+            background: #f8fafc;
+            border: 1px dashed var(--cf-border);
+            border-radius: 0.85rem;
+            padding: 1rem 1.25rem;
+            font-size: 0.825rem;
+            color: #64748b;
+            line-height: 1.55;
+        }
+    </style>
+</head>
+<body>
+
+<!-- University Navigation Bar -->
+<div th:replace="~{fragments/navbar :: navbar('profile')}"></div>
+
+<main class="profile-container">
+    <div class="profile-card">
+        <!-- Header -->
+        <div class="profile-header">
+            <div class="header-icon-box">
+                <i class="bi bi-person-vcard-fill"></i>
+            </div>
+            <h2>Institutional Student Profile</h2>
+            <p>Please confirm your official SRM University-AP student details. This info identifies you across all campus maintenance requests and auto-prefills your future grievances.</p>
+        </div>
+
+        <!-- Body -->
+        <div class="profile-body">
+            <!-- Flash Messages -->
+            <div th:if="${errorMessage}" class="alert alert-danger py-2 small mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                <span th:text="${errorMessage}"></span>
+            </div>
+            <div th:if="${successMessage}" class="alert alert-success py-2 small mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <span th:text="${successMessage}"></span>
+            </div>
+
+            <form th:action="@{/student/complete-profile}" method="post">
+                <!-- SECTION 1: IDENTITY -->
+                <div class="section-badge-title">
+                    <i class="bi bi-shield-check"></i> 1. Official Identification
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label-custom">SRM Registration Number <span class="text-danger">*</span></label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-person-badge input-icon"></i>
+                            <input type="text" name="regNo" id="regNoInput" class="form-control form-control-custom"
+                                   placeholder="e.g. AP25110070893"
+                                   pattern="^[a-zA-Z0-9_\-]{4,25}$"
+                                   th:value="${student.regOrStaffId != null and !#strings.startsWith(student.regOrStaffId, 'TEMP_') and !#strings.startsWith(student.regOrStaffId, 'AP_EMAIL') ? student.regOrStaffId : ''}"
+                                   required autofocus>
+                        </div>
+                        <div class="form-text small text-muted">Format: Your official SRM-AP Registration No. (e.g. <code>AP25110070893</code>)</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Full Name <span class="text-danger">*</span></label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-person input-icon"></i>
+                            <input type="text" name="fullName" id="fullNameInput" class="form-control form-control-custom"
+                                   placeholder="e.g. Suraj Sharma"
+                                   th:value="${student.fullName != null and !#strings.startsWith(student.fullName, 'New Student') ? student.fullName : ''}"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: ACADEMIC DETAILS -->
+                <div class="section-badge-title">
+                    <i class="bi bi-mortarboard"></i> 2. Academic Program
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label-custom">SRM-AP School &amp; Program <span class="text-danger">*</span></label>
+                        <select name="departmentCode" class="form-select form-select-custom" required>
+                            <option value="CSE" th:selected="${student.departmentCode == 'CSE'}">SEAS: Computer Science &amp; Engineering (CSE)</option>
+                            <option value="ECE" th:selected="${student.departmentCode == 'ECE'}">SEAS: Electronics &amp; Communication (ECE)</option>
+                            <option value="EEE" th:selected="${student.departmentCode == 'EEE'}">SEAS: Electrical &amp; Electronics (EEE)</option>
+                            <option value="ME" th:selected="${student.departmentCode == 'ME'}">SEAS: Mechanical Engineering (ME)</option>
+                            <option value="CE" th:selected="${student.departmentCode == 'CE'}">SEAS: Civil Engineering (CE)</option>
+                            <option value="PSB" th:selected="${student.departmentCode == 'PSB' or student.departmentCode == 'MGMT'}">PSB: Paari School of Business (BBA / MBA)</option>
+                            <option value="ESLA" th:selected="${student.departmentCode == 'ESLA' or student.departmentCode == 'SLABS'}">ESLA: Easwari School of Liberal Arts</option>
+                            <option value="LAW" th:selected="${student.departmentCode == 'LAW'}">SOL: School of Law (BA LLB / BBA LLB)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-custom">Study Year <span class="text-danger">*</span></label>
+                        <select name="studyYear" class="form-select form-select-custom" required>
+                            <option value="1" th:selected="${student.studyYear == 1}">1st Year</option>
+                            <option value="2" th:selected="${student.studyYear == 2}">2nd Year</option>
+                            <option value="3" th:selected="${student.studyYear == 3}">3rd Year</option>
+                            <option value="4" th:selected="${student.studyYear == 4}">4th Year</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-custom">Section <span class="text-danger">*</span></label>
+                        <input type="text" name="section" class="form-control form-control-custom text-uppercase"
+                               placeholder="e.g. F"
+                               th:value="${student.section != null ? student.section : 'F'}"
+                               maxlength="5" required>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: CAMPUS RESIDENCE -->
+                <div class="section-badge-title">
+                    <i class="bi bi-geo-alt"></i> 3. Campus Residence &amp; Room
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label-custom">Residence Type <span class="text-danger">*</span></label>
+                        <select name="residenceType" id="residenceTypeSelect" class="form-select form-select-custom" onchange="toggleResidenceFields()" required>
+                            <option value="HOSTELLER" th:selected="${student.residenceType == null or student.residenceType.name() == 'HOSTELLER'}">Campus Hosteller</option>
+                            <option value="DAY_SCHOLAR" th:selected="${student.residenceType != null and student.residenceType.name() == 'DAY_SCHOLAR'}">Day Scholar</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4" id="hostelBlockWrapper">
+                        <label class="form-label-custom">Hostel Tower / Residential Block <span class="text-danger">*</span></label>
+                        <select name="buildingBlock" id="buildingBlockSelect" class="form-select form-select-custom" required>
+                            <option value="Ganga Tower - Block A" th:selected="${student.buildingBlock == 'Ganga Tower - Block A' or student.buildingBlock == 'Ganga Tower'}">Ganga Tower - Block A (Boys)</option>
+                            <option value="Ganga Tower - Block B" th:selected="${student.buildingBlock == 'Ganga Tower - Block B'}">Ganga Tower - Block B (Boys)</option>
+                            <option value="Yamuna Tower" th:selected="${student.buildingBlock == 'Yamuna Tower'}">Yamuna Tower (Girls)</option>
+                            <option value="Krishna Tower" th:selected="${student.buildingBlock == 'Krishna Tower'}">Krishna Tower (Boys)</option>
+                            <option value="Vedavathi Tower" th:selected="${student.buildingBlock == 'Vedavathi Tower'}">Vedavathi Tower (Boys)</option>
+                            <option value="Kaveri Tower" th:selected="${student.buildingBlock == 'Kaveri Tower'}">Kaveri Tower (Girls)</option>
+                            <option value="Godavari Tower" th:selected="${student.buildingBlock == 'Godavari Tower'}">Godavari Tower (Boys)</option>
+                            <option value="Narmada Tower" th:selected="${student.buildingBlock == 'Narmada Tower'}">Narmada Tower (Girls)</option>
+                            <option value="Day Scholar (Non-Resident)" th:selected="${student.buildingBlock == 'Day Scholar (Non-Resident)'}">Day Scholar (Non-Resident)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4" id="roomNumberWrapper">
+                        <label class="form-label-custom">Room Number <span class="text-danger">*</span></label>
+                        <div class="input-group-custom">
+                            <i class="bi bi-door-closed input-icon"></i>
+                            <input type="text" name="roomOrZone" id="roomOrZoneInput" class="form-control form-control-custom"
+                                   placeholder="e.g. G-412"
+                                   th:value="${student.roomOrZone != null ? student.roomOrZone : ''}"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box mb-4">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                    <strong>Auto-Prefill Guarantee:</strong> Once saved, your registered Hostel Tower and Room Number will automatically populate on every complaint form you open, saving you from repetitive entry.
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-save-profile w-100 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-check2-circle fs-5"></i> Save Institutional Profile &amp; Continue &rarr;
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+    function toggleResidenceFields() {
+        const resSelect = document.getElementById('residenceTypeSelect');
+        const bldgSelect = document.getElementById('buildingBlockSelect');
+        const roomInput = document.getElementById('roomOrZoneInput');
+
+        if (resSelect.value === 'DAY_SCHOLAR') {
+            bldgSelect.value = 'Day Scholar (Non-Resident)';
+            roomInput.value = 'Campus Day Scholar';
+        } else {
+            if (bldgSelect.value === 'Day Scholar (Non-Resident)') {
+                bldgSelect.value = 'Ganga Tower - Block A';
+            }
+            if (roomInput.value === 'Campus Day Scholar') {
+                roomInput.value = '';
+            }
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

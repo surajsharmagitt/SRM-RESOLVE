@@ -1,0 +1,193 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --srm-navy: #002147;
+    --srm-navy-dark: #00152e;
+    --srm-gold: #f3b233;
+    --srm-slate: #0f172a;
+    --srm-bg: #f8fafc;
+    --srm-card-bg: #ffffff;
+    --srm-border: #e2e8f0;
+    --srm-blue: #0d6efd;
+    --srm-green: #10b981;
+    --srm-amber: #f59e0b;
+    --srm-red: #ef4444;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--srm-bg);
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Category Grid Tiles */
+.category-tile {
+    cursor: pointer;
+    border: 2px solid var(--srm-border);
+    border-radius: 0.75rem;
+    background: #ffffff;
+    padding: 0.85rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+.category-tile:hover {
+    border-color: var(--srm-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.12);
+}
+.category-tile.active {
+    border-color: var(--srm-blue);
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+.category-tile.active .category-icon {
+    transform: scale(1.1);
+}
+.category-icon {
+    font-size: 1.5rem;
+    transition: transform 0.2s ease;
+}
+
+/* 4-Stage Ticket Lifecycle Stepper */
+.ticket-stepper-wrap {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    margin: 1.25rem 0 0.75rem;
+}
+.ticket-stepper-bar {
+    position: absolute;
+    top: 14px;
+    left: 20px;
+    right: 20px;
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 1;
+}
+.ticket-stepper-bar-fill {
+    position: absolute;
+    top: 14px;
+    left: 20px;
+    height: 3px;
+    background: var(--srm-green);
+    z-index: 1;
+    transition: width 0.4s ease;
+}
+.stepper-node-item {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    flex: 1;
+}
+.stepper-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+.stepper-circle.completed {
+    background: var(--srm-green);
+    border-color: var(--srm-green);
+    color: #ffffff;
+}
+.stepper-circle.current {
+    background: var(--srm-blue);
+    border-color: #93c5fd;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+}
+.stepper-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 4px;
+    display: block;
+    line-height: 1.1;
+}
+.stepper-circle.completed + .stepper-label,
+.stepper-circle.current + .stepper-label {
+    color: #0f172a;
+}
+
+/* WhatsApp-Style Chat UI */
+.whatsapp-chat-bg {
+    background-color: #efeae2;
+    background-image: radial-gradient(#d1d7db 0.75px, transparent 0.75px);
+    background-size: 16px 16px;
+}
+.bubble-student {
+    background-color: #ffffff;
+    border-radius: 0.75rem 0.75rem 0.75rem 0;
+    padding: 0.65rem 0.9rem;
+    max-width: 75%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.bubble-staff {
+    background-color: #d9fdd3;
+    border-radius: 0.75rem 0.75rem 0 0.75rem;
+    padding: 0.65rem 0.9rem;
+    max-width: 75%;
+    margin-left: auto;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.canned-chip {
+    cursor: pointer;
+    font-size: 0.75rem;
+    border-radius: 1rem;
+    padding: 0.3rem 0.7rem;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.canned-chip:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+/* Star Rating Selector */
+.star-rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    font-size: 1.8rem;
+    justify-content: center;
+}
+.star-rating input {
+    display: none;
+}
+.star-rating label {
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    padding: 0 0.15rem;
+}
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #f59e0b;
+}
+
+/* SLA Pulsing Badges */
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+.badge-escalated {
+    animation: pulse-red 2s infinite;
+}
+
