@@ -16,8 +16,9 @@ Built for **SRM University-AP (SRMUAP)** using **Java 21 LTS**, **Spring Boot 3.
    - Returning logins load the saved student profile and tickets automatically across any browser or device.
 
 2. **Zero-Friction Issue Routing (`CampusIntelligenceEngine`):**
-   - Quick-tap grievance grid plus free-text issue prediction that routes tickets automatically to the appropriate campus department and sets priority and SLA deadlines.
-   - Confidential priority routing for emergency safety cells (ICC, Anti-Ragging, Counseling).
+   - Covers all **20 campus departments** and **31 grievance categories** (lost ID cards, mess dining, water RO, hostel maintenance, Wi-Fi/ITKM, fee refund queries, hospital/wellness, labs, library, security, and safety cells).
+   - Quick-tap grievance grid plus natural-language grievance keyword matching that routes tickets automatically to the responsible campus department, assigning priority and SLA deadlines.
+   - Confidential priority routing for emergency safety cells (ICC, Anti-Ragging, Student Counseling).
 
 3. **Parent-Child Incident Grouping (`IncidentGroupingEngine`):**
    - Groups concurrent shared-utility complaints in the same residential tower within a 6-hour window using Jaccard token similarity into a single `master_incident`, surfacing a sanitized block banner with one-tap **"I'm Affected Too"** linking.
@@ -69,19 +70,19 @@ srm-resolve/
     │       ├── data.sql        # Institutional departments, categories, and roster seed data
     │       ├── static/css/     # Stylesheets
     │       └── templates/      # Thymeleaf HTML views
-    └── test/                   # JUnit 5 & MockMvc automated test suite (46 tests)
+    └── test/                   # JUnit 5 & MockMvc automated test suite (148 tests)
 ```
 
 ---
 
 ## Classroom Demonstration Credentials & Portals
 
-> **Note on Demonstration Mode:** Demonstration user accounts and passkeys are seeded and active **only** when `app.demo-mode=true` (local evaluation / test profile). In production (`app.demo-mode=false`), demonstration accounts with known passwords are not seeded, and the evaluation passkey is strictly disabled. No demonstration accounts impersonate real university officials.
+> **Evaluation Quick Access:** For instant evaluation and classroom demonstrations, passkey **`123456`** is enabled on the student portal (`/student-login`) with a one-click **⚡ Quick Fill** button. Official institutional email domains (`@srmap.edu.in` and `@srmist.edu.in`) are strictly validated.
 
-| Role | Portal Route | Account Name | Email | Auth Method (Demo Mode Only) |
+| Role | Portal Route | Account Name | Email | Auth Method (Evaluation) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Student (Demo)** | `/student-login` | Suraj Sharma (Demo Student) | `suraj_sharma@srmap.edu.in` | Email OTP or Passkey `123456` |
-| **Student (Demo)** | `/student-login` | Ananya Reddy (Demo Student) | `ananya_reddy@srmap.edu.in` | Email OTP or Passkey `123456` |
+| **Student (Demo)** | `/student-login` | Suraj Sharma (Demo Student) | `suraj_sharma@srmap.edu.in` | Passkey `123456` or Email OTP |
+| **Student (Demo)** | `/student-login` | Ananya Reddy (Demo Student) | `ananya_reddy@srmap.edu.in` | Passkey `123456` or Email OTP |
 | **Water & Plumbing Staff** | `/authority-login` | Water Plumbing Staff 1 (Demo) | `water.staff1@srmap.edu.in` | `staff123` |
 | **Hostel / CLM Staff** | `/authority-login` | Hostel Maintenance Staff 1 (Demo) | `hostel.staff1@srmap.edu.in` | `staff123` |
 | **Department Head (Water)** | `/authority-login` | Water & Plumbing Lead (Demo) | `water.head@srmap.edu.in` | `staff123` |
@@ -98,7 +99,7 @@ srm-resolve/
 - Apache Maven 3.9+
 - MySQL 8.0+ running on port `3306`
 
-### Run Automated Test Suite (63 Tests)
+### Run Automated Test Suite (148 Tests)
 ```bash
 mvn clean test
 ```
