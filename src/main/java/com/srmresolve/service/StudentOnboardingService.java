@@ -38,8 +38,14 @@ public class StudentOnboardingService {
     @Value("${app.mail.allowed-domains:srmap.edu.in}")
     private String allowedDomains;
 
-    @Value("${app.mail.from:${spring.mail.username:noreply@srmap.edu.in}}")
+    @Value("${app.mail.from:}")
     private String mailFrom;
+
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
 
     @Value("${app.demo-mode:false}")
     private boolean demoMode;
@@ -133,18 +139,27 @@ public class StudentOnboardingService {
             log.info("🔑 SRM-RESOLVE verification code generated for [{}], purpose: {}.", email, purpose);
         }
 
-        if (!mailSender.isPresent()) {
+        // Determine effective sender email address (never allow empty string to trigger MailParseException)
+        String senderAddress = (mailFrom != null && !mailFrom.isBlank())
+                ? mailFrom.trim()
+                : ((mailUsername != null && !mailUsername.isBlank()) ? mailUsername.trim() : "noreply@srmap.edu.in");
+
+        boolean isMailConfigured = mailSender.isPresent()
+                && (mailUsername != null && !mailUsername.isBlank())
+                && (mailPassword != null && !mailPassword.isBlank());
+
+        if (!isMailConfigured) {
             if (demoMode) {
-                log.info("Local demo mode active: SMTP mail sender is absent, proceeding with demo passkey/log.");
+                log.info("Demonstration mode active: SMTP credentials not configured. Proceeding with logged OTP/demo passkey.");
                 return;
             } else {
-                throw new IllegalStateException("Campus mail delivery service is not configured. Please set MAIL_USERNAME and MAIL_PASSWORD environment variables or contact administrator.");
+                throw new IllegalStateException("Campus email service is not configured with sender credentials. Please configure MAIL_USERNAME and MAIL_PASSWORD environment variables or enable demonstration mode (APP_DEMO_MODE=true).");
             }
         }
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(mailFrom);
+            message.setFrom(senderAddress);
             message.setTo(email);
             message.setSubject("SRM-Resolve OTP: " + plaintextOtp + " (Valid for 10 mins)");
             message.setText("Dear Student,\n\nYour SRM-Resolve 6-digit verification code is:\n\n" +
@@ -166,7 +181,7 @@ public class StudentOnboardingService {
             if (demoMode) {
                 log.warn("Demo mode active: SMTP send failed. Use demo passkey 123456 or logged OTP.");
             } else {
-                throw new IllegalStateException("Campus mail delivery failed: Unable to connect to mail server. Please try again later.");
+                throw new IllegalStateException("Campus mail delivery failed: Unable to connect to mail server (outbound SMTP ports may be blocked by network provider).");
             }
         } catch (Exception e) {
             log.error("Failed to dispatch email via SMTP to {}: {}", email, e.getMessage(), e);

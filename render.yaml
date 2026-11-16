@@ -14,7 +14,7 @@ services:
       - key: TZ
         value: Asia/Kolkata
       - key: APP_DEMO_MODE
-        value: "false"
+        value: "true"
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD
