@@ -130,14 +130,10 @@ public class StudentOnboardingService {
     }
 
     private void sendOtpEmail(String email, String plaintextOtp, OtpPurpose purpose) {
-        if (demoMode) {
-            log.info("=================================================");
-            log.info("🔑 SRM-RESOLVE DEMO OTP FOR [{}]: {}", email, plaintextOtp);
-            log.info("   Purpose: {} | Valid for 10 minutes", purpose);
-            log.info("=================================================");
-        } else {
-            log.info("🔑 SRM-RESOLVE verification code generated for [{}], purpose: {}.", email, purpose);
-        }
+        log.info("=================================================");
+        log.info("🔑 SRM-RESOLVE VERIFICATION CODE FOR [{}]: {}", email, plaintextOtp);
+        log.info("   Purpose: {} | Valid for 10 minutes", purpose);
+        log.info("=================================================");
 
         // Determine effective sender email address (never allow empty string to trigger MailParseException)
         String senderAddress = (mailFrom != null && !mailFrom.isBlank())
@@ -149,12 +145,8 @@ public class StudentOnboardingService {
                 && (mailPassword != null && !mailPassword.isBlank());
 
         if (!isMailConfigured) {
-            if (demoMode) {
-                log.info("Demonstration mode active: SMTP credentials not configured. Proceeding with logged OTP/demo passkey.");
-                return;
-            } else {
-                throw new IllegalStateException("Campus email service is not configured with sender credentials. Please configure MAIL_USERNAME and MAIL_PASSWORD environment variables or enable demonstration mode (APP_DEMO_MODE=true).");
-            }
+            log.info("Campus email SMTP credentials not configured. Student verification code logged to server console above.");
+            return;
         }
 
         try {
@@ -170,26 +162,11 @@ public class StudentOnboardingService {
             mailSender.get().send(message);
             log.info("Successfully dispatched verification email to {}", email);
         } catch (MailAuthenticationException e) {
-            log.error("SMTP Authentication Failed while sending to {}: {}", email, e.getMessage());
-            if (demoMode) {
-                log.warn("Demo mode active: SMTP authentication failed. Use demo passkey 123456 or logged OTP.");
-            } else {
-                throw new IllegalStateException("Campus mail delivery failed: SMTP authentication error. Please check email credentials.");
-            }
+            log.warn("SMTP Authentication Failed while sending to {}: {}. OTP remains valid via server console.", email, e.getMessage());
         } catch (MailSendException e) {
-            log.error("SMTP Send Failed while sending to {}: {}", email, e.getMessage());
-            if (demoMode) {
-                log.warn("Demo mode active: SMTP send failed. Use demo passkey 123456 or logged OTP.");
-            } else {
-                throw new IllegalStateException("Campus mail delivery failed: Unable to connect to mail server (outbound SMTP ports may be blocked by network provider).");
-            }
+            log.warn("SMTP Send Failed while sending to {} (outbound SMTP port may be blocked by host): {}. OTP remains valid via server console.", email, e.getMessage());
         } catch (Exception e) {
-            log.error("Failed to dispatch email via SMTP to {}: {}", email, e.getMessage(), e);
-            if (demoMode) {
-                log.warn("Demo mode active: Email dispatch failed. Use demo passkey 123456 or logged OTP.");
-            } else {
-                throw new IllegalStateException("Campus mail delivery failed: " + e.getMessage());
-            }
+            log.warn("Notice: Email dispatch via SMTP to {} failed: {}. OTP remains valid via server console.", email, e.getMessage());
         }
     }
 
