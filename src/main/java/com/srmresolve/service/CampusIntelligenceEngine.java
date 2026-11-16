@@ -196,7 +196,7 @@ public class CampusIntelligenceEngine {
             result.setPriority(Priority.CRITICAL);
             result.setLocationScope(LocationScope.ANY);
             result.setEmergency(true);
-            result.setEmergencyActionNotice("🔒 CONFIDENTIAL SAFE REPORT: Internal Complaints Committee (ICC) & Women's Cell alerted under UGC/POSH regulations. Direct confidential support: +91-866-2447777 / icc@srmap.edu.in.");
+            result.setEmergencyActionNotice("🔒 CONFIDENTIAL REPORT: Routed to Internal Complaints Committee (ICC). For immediate confidential support, contact: icc@srmap.edu.in / Helpline: +91-866-2447777.");
             result.setAckMinutes(15);
             result.setResolutionMinutes(120);
             result.setConfidenceScore(0.99);
@@ -216,7 +216,7 @@ public class CampusIntelligenceEngine {
             result.setPriority(Priority.CRITICAL);
             result.setLocationScope(LocationScope.ANY);
             result.setEmergency(true);
-            result.setEmergencyActionNotice("🚨 ZERO-TOLERANCE ANTI-RAGGING ALERT: Anti-Ragging Committee & Squad alerted immediately. National Anti-Ragging Helpline: 1800-180-5522 / antiragging@srmap.edu.in.");
+            result.setEmergencyActionNotice("🚨 ZERO-TOLERANCE ANTI-RAGGING: Routed to Anti-Ragging Committee. For immediate assistance, call National Anti-Ragging 24/7 Helpline: 1800-180-5522 or email antiragging@srmap.edu.in.");
             result.setAckMinutes(15);
             result.setResolutionMinutes(60);
             result.setConfidenceScore(0.98);
@@ -236,7 +236,7 @@ public class CampusIntelligenceEngine {
             result.setPriority(Priority.CRITICAL);
             result.setLocationScope(LocationScope.ANY);
             result.setEmergency(true);
-            result.setEmergencyActionNotice("💙 CONFIDENTIAL WELLNESS SUPPORT: Student Counseling Centre & Campus Wellness Lead notified. 24/7 Student Helpline: +91-866-2447788 / counseling@srmap.edu.in.");
+            result.setEmergencyActionNotice("💙 CONFIDENTIAL WELLNESS: Routed to Student Counseling Centre. For immediate emotional support, contact Campus Wellness Helpline: +91-866-2447788 / counseling@srmap.edu.in.");
             result.setAckMinutes(15);
             result.setResolutionMinutes(60);
             result.setConfidenceScore(0.96);
@@ -256,7 +256,7 @@ public class CampusIntelligenceEngine {
             result.setPriority(Priority.CRITICAL);
             result.setLocationScope(LocationScope.ANY);
             result.setEmergency(true);
-            result.setEmergencyActionNotice("🚨 ACTIVE WILDLIFE THREAT DETECTED: Rapid emergency dispatch alerted. Campus Security Control Room notified (+91-866-2447799).");
+            result.setEmergencyActionNotice("🚨 WILDLIFE / HAZARD: High-priority incident logged. Keep a safe distance and call Campus Security Control Room (+91-866-2447799).");
             result.setAckMinutes(15);
             result.setResolutionMinutes(60);
             result.setConfidenceScore(0.98);
@@ -276,7 +276,7 @@ public class CampusIntelligenceEngine {
             result.setPriority(Priority.CRITICAL);
             result.setLocationScope(LocationScope.ANY);
             result.setEmergency(true);
-            result.setEmergencyActionNotice("🚨 FIRE / SMOKE / HAZARD DETECTED: Fire marshal & emergency quick response team dispatched immediately.");
+            result.setEmergencyActionNotice("🚨 FIRE / SMOKE / HAZARD: High-priority incident logged. For life-threatening emergencies, dial Campus Security (+91-866-2447799) or 101/112.");
             result.setAckMinutes(10);
             result.setResolutionMinutes(30);
             result.setConfidenceScore(0.97);
@@ -296,7 +296,7 @@ public class CampusIntelligenceEngine {
             result.setPriority(Priority.CRITICAL);
             result.setLocationScope(LocationScope.ANY);
             result.setEmergency(true);
-            result.setEmergencyActionNotice("🚑 MEDICAL CRISIS DETECTED: 24/7 Campus Health Centre & Ambulance notified (+91-866-2447788).");
+            result.setEmergencyActionNotice("🚑 MEDICAL EMERGENCY: High-priority incident logged. For immediate medical aid or ambulance, directly call Campus Health Centre (+91-866-2447788) or dial 108/112.");
             result.setAckMinutes(10);
             result.setResolutionMinutes(30);
             result.setConfidenceScore(0.96);

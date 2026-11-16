@@ -14,9 +14,9 @@ services:
       - key: TZ
         value: Asia/Kolkata
       - key: MAIL_USERNAME
-        value: surajxsharma.in@gmail.com
+        sync: false
       - key: MAIL_PASSWORD
-        value: cmzkykhwsixfsvbt
+        sync: false
       - key: MAIL_FROM
-        value: surajxsharma.in@gmail.com
+        sync: false
 

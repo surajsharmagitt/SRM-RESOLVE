@@ -52,9 +52,14 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("otpSent", true);
             redirectAttributes.addFlashAttribute("pendingRegNo", regNo);
             redirectAttributes.addFlashAttribute("pendingEmail", email);
-            redirectAttributes.addFlashAttribute("demoOtp", plaintextOtp);
-            redirectAttributes.addFlashAttribute("successMessage", 
-                "Verification code generated! [Demo/Dev Mode OTP: " + plaintextOtp + "]. Real email dispatch to " + email + " was also attempted.");
+            if (simulationService.isDemoModeEnabled()) {
+                redirectAttributes.addFlashAttribute("demoOtp", plaintextOtp);
+                redirectAttributes.addFlashAttribute("successMessage",
+                    "Verification code generated! [Demo Mode OTP: " + plaintextOtp + "]. Real email dispatch was attempted.");
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage",
+                    "A 6-digit verification code has been dispatched to your official email. Please check your inbox and spam folder.");
+            }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             redirectAttributes.addFlashAttribute("pendingRegNo", regNo);
@@ -106,9 +111,14 @@ public class AuthController {
             String otp = onboardingService.generateAndSendPasswordResetOtp(regNoOrEmail);
             redirectAttributes.addFlashAttribute("otpSent", true);
             redirectAttributes.addFlashAttribute("regNoOrEmail", regNoOrEmail);
-            redirectAttributes.addFlashAttribute("demoOtp", otp);
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Password reset code generated! [Demo/Dev Mode OTP: " + otp + "].");
+            if (simulationService.isDemoModeEnabled()) {
+                redirectAttributes.addFlashAttribute("demoOtp", otp);
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "Password reset code generated! [Demo Mode OTP: " + otp + "].");
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "A 6-digit password reset code has been dispatched to your institutional email.");
+            }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

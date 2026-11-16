@@ -17,8 +17,8 @@ else
         mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1 || true
     fi
 
-    # Start MariaDB daemon in the background
-    /usr/bin/mysqld_safe --datadir=/var/lib/mysql --skip-syslog &
+    # Start MariaDB daemon in the background with memory limits tuned for Render 512MB container
+    /usr/bin/mysqld_safe --datadir=/var/lib/mysql --skip-syslog --innodb_buffer_pool_size=32M --innodb_log_buffer_size=4M --key_buffer_size=16M --max_connections=30 --performance_schema=OFF &
 
     # Wait for MariaDB to become ready
     echo "Waiting for MariaDB to be ready on port 3306..."
@@ -40,5 +40,5 @@ else
 fi
 
 echo "=== Launching SRM-RESOLVE Spring Boot Application on PORT ${PORT:-8080} ==="
-exec java -Duser.timezone=Asia/Kolkata -Xmx320m -Xms128m -Dserver.port=${PORT:-8080} -jar app.jar
+exec java -Duser.timezone=Asia/Kolkata -Xmx256m -Xms96m -XX:MaxMetaspaceSize=96m -XX:+UseSerialGC -Dserver.port=${PORT:-8080} -jar app.jar
 

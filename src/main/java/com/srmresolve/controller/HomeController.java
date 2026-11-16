@@ -71,29 +71,34 @@ public class HomeController {
     public String sendStudentLoginOtp(@RequestParam("email") String email,
                                       Model model) {
         String cleanEmail = (email != null) ? email.trim().toLowerCase() : "";
+        boolean isDemo = simulationService.isDemoModeEnabled();
         try {
             String plaintextOtp = onboardingService.generateAndSendStudentLoginOtp(cleanEmail);
             model.addAttribute("otpSent", true);
             model.addAttribute("studentEmail", cleanEmail);
-            model.addAttribute("demoOtp", "123456");
-            model.addAttribute("successMessage",
-                    "Verification code dispatched! You can enter the code from your email (check Spam folder) or use passcode 123456.");
+            if (isDemo) {
+                model.addAttribute("demoOtp", "123456");
+                model.addAttribute("successMessage",
+                        "Verification code dispatched! [Demo Mode Passkey: 123456 or enter code from email].");
+            } else {
+                model.addAttribute("successMessage",
+                        "Verification code dispatched! Please enter the 6-digit code sent to your official email (check Spam folder).");
+            }
         } catch (Exception e) {
             log.warn("Notice during OTP dispatch for {}: {}", cleanEmail, e.getMessage());
-            // If the email domain was valid, allow them to enter 123456 regardless of SMTP connectivity
-            if (cleanEmail.endsWith("@srmap.edu.in") || cleanEmail.endsWith("@srmist.edu.in") || cleanEmail.equals("surajxsharma.in@gmail.com")) {
+            if (isDemo && (cleanEmail.endsWith("@srmap.edu.in") || cleanEmail.endsWith("@srmist.edu.in") || cleanEmail.equals("surajxsharma.in@gmail.com"))) {
                 model.addAttribute("otpSent", true);
                 model.addAttribute("studentEmail", cleanEmail);
                 model.addAttribute("demoOtp", "123456");
                 model.addAttribute("successMessage",
-                        "Verification session ready! You can use instant passcode 123456 to sign in.");
+                        "Verification session ready! [Demo Mode Passkey: 123456].");
             } else {
-                model.addAttribute("errorMessage", e.getMessage());
+                model.addAttribute("errorMessage", e.getMessage() != null ? e.getMessage() : "Unable to dispatch verification email. Please try again.");
                 model.addAttribute("studentEmail", cleanEmail);
                 model.addAttribute("otpSent", false);
             }
         }
-        model.addAttribute("demoMode", simulationService.isDemoModeEnabled());
+        model.addAttribute("demoMode", isDemo);
         return "student-login";
     }
 

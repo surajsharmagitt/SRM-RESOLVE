@@ -36,11 +36,11 @@ public class StudentOnboardingService {
     @Value("${app.mail.allowed-domains:srmap.edu.in}")
     private String allowedDomains;
 
-    @Value("${app.mail.from:${spring.mail.username:surajxsharma.in@gmail.com}}")
+    @Value("${app.mail.from:${spring.mail.username:noreply@srmap.edu.in}}")
     private String mailFrom;
 
-    @Value("${spring.mail.password:changeme}")
-    private String mailPassword;
+    @Value("${app.demo-mode:false}")
+    private boolean demoMode;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -122,13 +122,17 @@ public class StudentOnboardingService {
     }
 
     private void sendOtpEmail(String email, String plaintextOtp, OtpPurpose purpose) {
-        log.info("=================================================");
-        log.info("🔑 SRM-RESOLVE OTP FOR [{}]: {}", email, plaintextOtp);
-        log.info("   Purpose: {} | Valid for 10 minutes", purpose);
-        log.info("=================================================");
+        if (demoMode) {
+            log.info("=================================================");
+            log.info("🔑 SRM-RESOLVE DEMO OTP FOR [{}]: {}", email, plaintextOtp);
+            log.info("   Purpose: {} | Valid for 10 minutes", purpose);
+            log.info("=================================================");
+        } else {
+            log.info("🔑 SRM-RESOLVE verification code generated for [{}], purpose: {}.", email, purpose);
+        }
 
-        log.info("📧 Attempting email dispatch: mailSender.isPresent={}, mailFrom={}, to={}",
-                mailSender.isPresent(), mailFrom, email);
+        log.info("📧 Attempting email dispatch: mailSender.isPresent={}, to={}",
+                mailSender.isPresent(), email);
 
         if (mailSender.isPresent()) {
             java.util.concurrent.CompletableFuture.runAsync(() -> {
@@ -373,8 +377,8 @@ public class StudentOnboardingService {
         String cleanEmail = email.trim().toLowerCase();
         String cleanOtp = plaintextOtp.trim();
 
-        // Universal master passkey for testing and evaluation
-        boolean isMasterOtp = "123456".equals(cleanOtp);
+        // Demonstration passkey is strictly restricted to isolated demo environments (demoMode = true)
+        boolean isMasterOtp = demoMode && "123456".equals(cleanOtp);
 
         if (!isMasterOtp) {
             List<EmailOtpVerification> activeOtps = otpDao.findAllActiveByEmail(cleanEmail, OtpPurpose.REGISTRATION);
@@ -385,7 +389,8 @@ public class StudentOnboardingService {
                     .collect(java.util.stream.Collectors.toList());
 
             if (validOtps.isEmpty()) {
-                throw new IllegalArgumentException("No active verification code found for " + cleanEmail + ". Please request a new code or enter passkey 123456.");
+                String hint = demoMode ? " Please request a new code or enter demo passkey 123456." : " Please request a new verification code.";
+                throw new IllegalArgumentException("No active verification code found for " + cleanEmail + "." + hint);
             }
 
             EmailOtpVerification matchedOtp = null;
@@ -400,17 +405,18 @@ public class StudentOnboardingService {
                 EmailOtpVerification latest = validOtps.get(0);
                 otpDao.incrementAttemptCount(latest.getOtpId());
                 int remaining = latest.getMaxAttempts() - (latest.getAttemptCount() + 1);
+                String hint = demoMode ? " (or enter demo passkey 123456)" : "";
                 if (remaining > 0) {
-                    throw new IllegalArgumentException("Invalid verification code. " + remaining + " attempts remaining (or use passkey 123456).");
+                    throw new IllegalArgumentException("Invalid verification code. " + remaining + " attempts remaining" + hint + ".");
                 } else {
-                    throw new IllegalArgumentException("Maximum verification attempts exceeded. Please request a new code or use passkey 123456.");
+                    throw new IllegalArgumentException("Maximum verification attempts exceeded. Please request a new code" + hint + ".");
                 }
             }
 
             // Invalidate active OTPs for this email so they cannot be reused
             otpDao.invalidateExistingOtpsByEmail(cleanEmail, OtpPurpose.REGISTRATION);
         } else {
-            log.info("Master passcode [123456] used for student authentication: {}", cleanEmail);
+            log.info("Demo master passcode [123456] used for student authentication: {}", cleanEmail);
             try {
                 otpDao.invalidateExistingOtpsByEmail(cleanEmail, OtpPurpose.REGISTRATION);
             } catch (Exception ignored) {}

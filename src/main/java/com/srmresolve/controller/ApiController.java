@@ -58,9 +58,25 @@ public class ApiController {
                 .orElse(null);
     }
 
+    private boolean isAuthorizedForTicket(User user, GrievanceTicket ticket) {
+        if (user == null || ticket == null) return false;
+        String role = user.getRole().name();
+        if ("ROLE_ADMIN".equals(role) || "ROLE_EXECUTIVE".equals(role)) {
+            return true;
+        }
+        if ("ROLE_STUDENT".equals(role)) {
+            return ticket.getStudentUserId().equals(user.getUserId());
+        }
+        if ("ROLE_DEPT_STAFF".equals(role) || "ROLE_DEPT_HEAD".equals(role)) {
+            return user.getAssignedDeptId() != null && user.getAssignedDeptId().equals(ticket.getAssignedDeptId());
+        }
+        return false;
+    }
+
     /**
      * Periodic live polling endpoint for department case queue.
      * Returns total cases, active count, and ticket list for the department.
+     * Access restricted to department staff and administrators.
      */
     @GetMapping("/department/live-queue")
     public ResponseEntity<Map<String, Object>> getDepartmentLiveQueue(Authentication auth) {
@@ -69,7 +85,19 @@ public class ApiController {
             return ResponseEntity.status(401).build();
         }
 
-        Integer deptId = currentUser.getAssignedDeptId() != null ? currentUser.getAssignedDeptId() : 1;
+        // Students cannot access department queues
+        if (currentUser.getRole().name().equals("ROLE_STUDENT")) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Integer deptId = currentUser.getAssignedDeptId();
+        if (deptId == null) {
+            if ("ROLE_ADMIN".equals(currentUser.getRole().name()) || "ROLE_EXECUTIVE".equals(currentUser.getRole().name())) {
+                deptId = 1;
+            } else {
+                return ResponseEntity.status(403).build();
+            }
+        }
         List<GrievanceTicket> tickets = ticketDao.findByDepartmentId(deptId);
 
         long activeCount = tickets.stream().filter(t -> !"CLOSED".equals(t.getStatus().name())).count();
@@ -131,13 +159,7 @@ public class ApiController {
             return ResponseEntity.status(401).build();
         }
 
-        // Student isolation check
-        if (currentUser.getRole().name().equals("ROLE_STUDENT") && !ticket.getStudentUserId().equals(currentUser.getUserId())) {
-            return ResponseEntity.status(403).build();
-        }
-
-        // Staff isolation check
-        if (currentUser.getRole().name().equals("ROLE_DEPT_STAFF") && !ticket.getAssignedDeptId().equals(currentUser.getAssignedDeptId())) {
+        if (!isAuthorizedForTicket(currentUser, ticket)) {
             return ResponseEntity.status(403).build();
         }
 
@@ -147,6 +169,7 @@ public class ApiController {
 
     /**
      * Post a new message to a ticket conversation.
+     * Strictly verifies participant authorization on the server.
      */
     @PostMapping("/tickets/{ticketId}/messages")
     public ResponseEntity<Map<String, Object>> postMessage(@PathVariable Long ticketId,
@@ -162,6 +185,11 @@ public class ApiController {
             return ResponseEntity.status(401).build();
         }
 
+        GrievanceTicket ticket = ticketOpt.get();
+        if (!isAuthorizedForTicket(currentUser, ticket)) {
+            return ResponseEntity.status(403).build();
+        }
+
         Long messageId = lifecycleDao.insertMessage(ticketId, currentUser.getUserId(),
                 currentUser.getRole().name(), request.getMessageBody(), false);
 
@@ -170,22 +198,55 @@ public class ApiController {
 
     /**
      * Get attachments for a ticket.
+     * Strictly enforces ticket access authorization before returning attachment records.
      */
     @GetMapping("/tickets/{ticketId}/attachments")
-    public ResponseEntity<List<com.srmresolve.model.TicketAttachment>> getAttachments(@PathVariable Long ticketId) {
+    public ResponseEntity<List<com.srmresolve.model.TicketAttachment>> getAttachments(@PathVariable Long ticketId, Authentication auth) {
+        User currentUser = resolveCurrentUser(auth);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Optional<GrievanceTicket> ticketOpt = ticketDao.findById(ticketId);
+        if (ticketOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        GrievanceTicket ticket = ticketOpt.get();
+        if (!isAuthorizedForTicket(currentUser, ticket)) {
+            return ResponseEntity.status(403).build();
+        }
+
         return ResponseEntity.ok(lifecycleDao.findAttachmentsByTicketId(ticketId));
     }
 
     /**
      * Download or view an attachment.
+     * Strictly verifies user authorization for the owning complaint before serving files.
      */
     @GetMapping("/attachments/{attachmentId}")
-    public ResponseEntity<org.springframework.core.io.Resource> getAttachment(@PathVariable Long attachmentId) {
+    public ResponseEntity<org.springframework.core.io.Resource> getAttachment(@PathVariable Long attachmentId, Authentication auth) {
+        User currentUser = resolveCurrentUser(auth);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
         Optional<com.srmresolve.model.TicketAttachment> attOpt = lifecycleDao.findAttachmentById(attachmentId);
         if (attOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         com.srmresolve.model.TicketAttachment att = attOpt.get();
+
+        Optional<GrievanceTicket> ticketOpt = ticketDao.findById(att.getTicketId());
+        if (ticketOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        GrievanceTicket ticket = ticketOpt.get();
+
+        if (!isAuthorizedForTicket(currentUser, ticket)) {
+            return ResponseEntity.status(403).build();
+        }
+
         java.nio.file.Path path = java.nio.file.Paths.get(att.getStoragePath());
         if (!java.nio.file.Files.exists(path)) {
             return ResponseEntity.notFound().build();

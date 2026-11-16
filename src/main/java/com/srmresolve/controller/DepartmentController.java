@@ -43,6 +43,15 @@ public class DepartmentController {
         this.handshakeService = handshakeService;
     }
 
+    private boolean isStaffAuthorizedForTicket(User staff, GrievanceTicket ticket) {
+        if (staff == null || ticket == null) return false;
+        String role = staff.getRole().name();
+        if ("ROLE_ADMIN".equals(role) || "ROLE_EXECUTIVE".equals(role)) {
+            return true;
+        }
+        return staff.getAssignedDeptId() != null && staff.getAssignedDeptId().equals(ticket.getAssignedDeptId());
+    }
+
     @GetMapping("/hub")
     public String departmentHub(@RequestParam(value = "selectedTicketId", required = false) Long selectedTicketId,
                                 Model model,
@@ -62,10 +71,13 @@ public class DepartmentController {
         List<User> staffMembers = userDao.findStaffByDepartment(deptId);
         model.addAttribute("staffMembers", staffMembers);
 
-        // Selected ticket for the right split-pane
+        // Selected ticket for the right split-pane (strictly authorized to department)
         GrievanceTicket currentTicket = null;
         if (selectedTicketId != null) {
-            currentTicket = ticketDao.findById(selectedTicketId).orElse(null);
+            GrievanceTicket found = ticketDao.findById(selectedTicketId).orElse(null);
+            if (found != null && isStaffAuthorizedForTicket(staff, found)) {
+                currentTicket = found;
+            }
         } else if (!tickets.isEmpty()) {
             currentTicket = tickets.get(0);
         }
@@ -87,6 +99,12 @@ public class DepartmentController {
                               Authentication auth,
                               RedirectAttributes redirectAttributes) {
         User staff = getAuthenticatedStaff(auth);
+        GrievanceTicket ticket = ticketDao.findById(ticketId).orElse(null);
+        if (ticket == null || !isStaffAuthorizedForTicket(staff, ticket)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access Denied: You cannot modify complaints outside your department.");
+            return "redirect:/department/hub";
+        }
+
         try {
             handshakeService.acknowledgeTicket(ticketId, staff.getUserId(), note);
             redirectAttributes.addFlashAttribute("successMessage", "Ticket acknowledged successfully.");
@@ -99,7 +117,22 @@ public class DepartmentController {
     @PostMapping("/tickets/{ticketId}/assign")
     public String assignStaff(@PathVariable Long ticketId,
                               @RequestParam("staffUserId") Long staffUserId,
+                              Authentication auth,
                               RedirectAttributes redirectAttributes) {
+        User staff = getAuthenticatedStaff(auth);
+        GrievanceTicket ticket = ticketDao.findById(ticketId).orElse(null);
+        if (ticket == null || !isStaffAuthorizedForTicket(staff, ticket)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access Denied: You cannot assign complaints outside your department.");
+            return "redirect:/department/hub";
+        }
+
+        // Validate that assigned staff member belongs to the same department
+        Optional<User> targetStaffOpt = userDao.findById(staffUserId);
+        if (targetStaffOpt.isEmpty() || !staff.getAssignedDeptId().equals(targetStaffOpt.get().getAssignedDeptId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid Assignment: Staff member must belong to your department.");
+            return "redirect:/department/hub?selectedTicketId=" + ticketId;
+        }
+
         try {
             ticketDao.updateStaffAssignment(ticketId, staffUserId);
             redirectAttributes.addFlashAttribute("successMessage", "Technician assigned successfully.");
@@ -114,6 +147,12 @@ public class DepartmentController {
                              Authentication auth,
                              RedirectAttributes redirectAttributes) {
         User staff = getAuthenticatedStaff(auth);
+        GrievanceTicket ticket = ticketDao.findById(ticketId).orElse(null);
+        if (ticket == null || !isStaffAuthorizedForTicket(staff, ticket)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access Denied: You cannot assign complaints outside your department.");
+            return "redirect:/department/hub";
+        }
+
         try {
             ticketDao.updateStaffAssignment(ticketId, staff.getUserId());
             redirectAttributes.addFlashAttribute("successMessage", "Case assigned to yourself (" + staff.getFullName() + ").");
@@ -130,6 +169,12 @@ public class DepartmentController {
                          Authentication auth,
                          RedirectAttributes redirectAttributes) {
         User staff = getAuthenticatedStaff(auth);
+        GrievanceTicket ticket = ticketDao.findById(ticketId).orElse(null);
+        if (ticket == null || !isStaffAuthorizedForTicket(staff, ticket)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access Denied: You cannot update complaints outside your department.");
+            return "redirect:/department/hub";
+        }
+
         try {
             handshakeService.setEtaAndProgress(ticketId, staff.getUserId(), eta, note);
             redirectAttributes.addFlashAttribute("successMessage", "ETA updated and status moved to IN_PROGRESS.");
@@ -145,6 +190,12 @@ public class DepartmentController {
                                Authentication auth,
                                RedirectAttributes redirectAttributes) {
         User staff = getAuthenticatedStaff(auth);
+        GrievanceTicket ticket = ticketDao.findById(ticketId).orElse(null);
+        if (ticket == null || !isStaffAuthorizedForTicket(staff, ticket)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Access Denied: You cannot resolve complaints outside your department.");
+            return "redirect:/department/hub";
+        }
+
         try {
             handshakeService.markResolvedByDept(ticketId, staff.getUserId(), resolutionSummary);
             redirectAttributes.addFlashAttribute("successMessage", "Ticket marked resolved. Awaiting student confirmation.");
@@ -159,6 +210,11 @@ public class DepartmentController {
                              @RequestParam("messageBody") String messageBody,
                              Authentication auth) {
         User staff = getAuthenticatedStaff(auth);
+        GrievanceTicket ticket = ticketDao.findById(ticketId).orElse(null);
+        if (ticket == null || !isStaffAuthorizedForTicket(staff, ticket)) {
+            return "redirect:/department/hub";
+        }
+
         if (messageBody != null && !messageBody.isBlank()) {
             lifecycleDao.insertMessage(ticketId, staff.getUserId(), staff.getRole().name(), messageBody.trim(), false);
         }

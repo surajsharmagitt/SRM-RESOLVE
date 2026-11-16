@@ -1,12 +1,11 @@
 -- =====================================================
--- SRM-RESOLVE: Seed Data
--- Inserts in strict FK dependency order
--- All timestamps and intervals aligned to Asia/Kolkata (IST)
--- Zero emdashes used throughout
+-- SRM-RESOLVE: Seed Data (Idempotent, Safe for Repeated Startups)
+-- Inserts in strict FK dependency order with INSERT IGNORE
+-- Preserves existing user data, registered accounts, and complaints
 -- =====================================================
 
 -- ========== 1. Departments ==========
-INSERT INTO departments (dept_id, dept_code, dept_name, contact_email, monthly_alert_threshold) VALUES
+INSERT IGNORE INTO departments (dept_id, dept_code, dept_name, contact_email, monthly_alert_threshold) VALUES
 (1, 'HOSTEL_MAINT', 'Campus Life & Maintenance (CLM)', 'director.clm@srmap.edu.in', 100),
 (2, 'WATER_PLUMBING', 'Water, RO Plant & Plumbing Services', 'water.plumbing@srmap.edu.in', 80),
 (3, 'MESS_COMMITTEE', 'Annapoorna Mess & Dining Committee', 'mess.committee@srmap.edu.in', 100),
@@ -25,7 +24,7 @@ INSERT INTO departments (dept_id, dept_code, dept_name, contact_email, monthly_a
 (16, 'FINANCE_ACCOUNTS', 'Directorate of Finance & Accounts', 'finance@srmap.edu.in', 40);
 
 -- ========== 2. Student Directory (Authorized roster) ==========
-INSERT INTO student_directory (reg_no, full_name, official_email, admission_year, current_study_year, department_code, section, is_active) VALUES
+INSERT IGNORE INTO student_directory (reg_no, full_name, official_email, admission_year, current_study_year, department_code, section, is_active) VALUES
 ('AP25110070893', 'Suraj Sharma', 'suraj_sharma@srmap.edu.in', 2025, 1, 'CSE', 'F', TRUE),
 ('AP25110070100', 'Ananya Reddy', 'ananya_reddy@srmap.edu.in', 2025, 1, 'CSE', 'A', TRUE),
 ('AP24110060050', 'Rahul Verma', 'rahul_verma@srmap.edu.in', 2024, 2, 'ECE', 'B', TRUE),
@@ -40,15 +39,15 @@ INSERT INTO student_directory (reg_no, full_name, official_email, admission_year
 -- 'staff123'    = $2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.
 
 -- Admin user (user_id = 1)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type) VALUES
-(1, 'ADMIN001', 'Dr. Vinayak Kalluri (Registrar & Admin)', 'admin@srmap.edu.in', '$2a$10$HOmWAwafrAfrvWhi9RVMTuKIH0RYza69BEmwwdqUEEvlVbwIosVv2', 'ROLE_ADMIN', 'VERIFIED', NULL, 'NA');
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type) VALUES
+(1, 'ADMIN001', 'Dr. Vinayak Kalluri (Registrar & Admin) [Demo Account]', 'admin@srmap.edu.in', '$2a$10$HOmWAwafrAfrvWhi9RVMTuKIH0RYza69BEmwwdqUEEvlVbwIosVv2', 'ROLE_ADMIN', 'VERIFIED', NULL, 'NA');
 
 -- Executive / VC (user_id = 2)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type) VALUES
-(2, 'EXEC001', 'Prof. Ch. Satish Kumar (Vice Chancellor)', 'vc@srmap.edu.in', '$2a$10$HOmWAwafrAfrvWhi9RVMTuKIH0RYza69BEmwwdqUEEvlVbwIosVv2', 'ROLE_EXECUTIVE', 'VERIFIED', NULL, 'NA');
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type) VALUES
+(2, 'EXEC001', 'Prof. Ch. Satish Kumar (Vice Chancellor) [Demo Account]', 'vc@srmap.edu.in', '$2a$10$HOmWAwafrAfrvWhi9RVMTuKIH0RYza69BEmwwdqUEEvlVbwIosVv2', 'ROLE_EXECUTIVE', 'VERIFIED', NULL, 'NA');
 
 -- Department Heads (Heads 1 to 10: user_id = 3 to 12)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
 (3, 'DH_HOSTEL', 'Mr. Anup Singh Suryavanshi (Director - CLM)', 'hostel.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'HOSTEL_MAINT', 'STAFF_QUARTERS', 1),
 (4, 'DH_WATER', 'Mr. Suresh Babu (Lead - Water Services)', 'water.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'WATER_PLUMBING', 'STAFF_QUARTERS', 2),
 (5, 'DH_MESS', 'Mrs. Lakshmi Devi (Annapoorna Mess Head)', 'mess.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'MESS_COMMITTEE', 'STAFF_QUARTERS', 3),
@@ -61,7 +60,7 @@ INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, ro
 (12, 'DH_COMMERCIAL', 'Dr. Ramesh Vaddi (Student Welfare & Commercial Outlets)', 'commercial.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'COMMERCIAL_WELFARE', 'STAFF_QUARTERS', 10);
 
 -- Verified Students (Fixed user_ids: Suraj = 18, Ananya = 19, Rahul = 20, Priya = 21, Vikram = 22)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, study_year, section, residence_type, building_block, room_or_zone) VALUES
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, study_year, section, residence_type, building_block, room_or_zone) VALUES
 (18, 'AP25110070893', 'Suraj Sharma', 'suraj_sharma@srmap.edu.in', '$2a$10$vV.xlyQPavBD6PjDMPJXv.9lFTrr2.rIyhOCbfKFsODgrsOw2Tipy', 'ROLE_STUDENT', 'VERIFIED', 'CSE', 1, 'F', 'HOSTELLER', 'Ganga Tower - Block A', 'G-412'),
 (19, 'AP25110070100', 'Ananya Reddy', 'ananya_reddy@srmap.edu.in', '$2a$10$vV.xlyQPavBD6PjDMPJXv.9lFTrr2.rIyhOCbfKFsODgrsOw2Tipy', 'ROLE_STUDENT', 'VERIFIED', 'CSE', 1, 'A', 'HOSTELLER', 'Yamuna Tower', 'Y-201'),
 (20, 'AP24110060050', 'Rahul Verma', 'rahul_verma@srmap.edu.in', '$2a$10$vV.xlyQPavBD6PjDMPJXv.9lFTrr2.rIyhOCbfKFsODgrsOw2Tipy', 'ROLE_STUDENT', 'VERIFIED', 'ECE', 2, 'B', 'HOSTELLER', 'Vedavathi Tower', 'V-305'),
@@ -69,7 +68,7 @@ INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, ro
 (22, 'AP25110070500', 'Vikram Singh', 'vikram_singh@srmap.edu.in', '$2a$10$vV.xlyQPavBD6PjDMPJXv.9lFTrr2.rIyhOCbfKFsODgrsOw2Tipy', 'ROLE_STUDENT', 'VERIFIED', 'CSE', 1, 'D', 'HOSTELLER', 'Krishna Tower', 'K-108');
 
 -- Department Staff (user_id = 30 to 45)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
 (30, 'STAFF_H1', 'Ramesh (CLM Staff 1)', 'hostel.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'HOSTEL_MAINT', 'STAFF_QUARTERS', 1),
 (31, 'STAFF_H2', 'Ganesh (CLM Staff 2)', 'hostel.staff2@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'HOSTEL_MAINT', 'STAFF_QUARTERS', 1),
 (32, 'STAFF_W1', 'Mahesh (Water Staff 1)', 'water.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'WATER_PLUMBING', 'STAFF_QUARTERS', 2),
@@ -87,7 +86,7 @@ INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, ro
 (44, 'STAFF_COM1', 'Kishore (Commercial Inspector 1)', 'commercial.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'COMMERCIAL_WELFARE', 'STAFF_QUARTERS', 10);
 
 -- Institutional Safety & Academic Department Heads (user_id = 51 to 56)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
 (51, 'DH_ICC', 'Prof. Poovammal E (Presiding Officer - ICC)', 'icc.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'INTERNAL_COMPLAINTS_COMMITTEE', 'STAFF_QUARTERS', 11),
 (52, 'DH_RAGGING', 'Prof. Ch. Satish Kumar (Chair - Anti-Ragging Committee)', 'antiragging.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'ANTI_RAGGING_CELL', 'STAFF_QUARTERS', 12),
 (53, 'DH_DSA', 'Ms. B. Revathi (Associate Director - Student Affairs)', 'dsa.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'STUDENT_AFFAIRS_SGRC', 'STAFF_QUARTERS', 13),
@@ -96,7 +95,7 @@ INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, ro
 (56, 'DH_FINANCE', 'Mr. M. Sridhar (Finance Officer)', 'finance.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'FINANCE_ACCOUNTS', 'STAFF_QUARTERS', 16);
 
 -- Additional Specialized Staff (user_id = 61 to 66)
-INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
+INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
 (61, 'STAFF_ICC1', 'Dr. Jeena Anne K (ICC Convenor & Counselor)', 'icc.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'INTERNAL_COMPLAINTS_COMMITTEE', 'STAFF_QUARTERS', 11),
 (62, 'STAFF_RAG1', 'Mr. T. Subba Rao (Anti-Ragging Squad Officer)', 'antiragging.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'ANTI_RAGGING_CELL', 'STAFF_QUARTERS', 12),
 (63, 'STAFF_DSA1', 'Mr. K. Sai Kumar (Student Welfare Officer)', 'dsa.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'STUDENT_AFFAIRS_SGRC', 'STAFF_QUARTERS', 13),
@@ -105,7 +104,7 @@ INSERT INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, ro
 (66, 'STAFF_FIN1', 'Mrs. N. Suhasini (Student Billing & Accounts Officer)', 'finance.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'FINANCE_ACCOUNTS', 'STAFF_QUARTERS', 16);
 
 -- ========== 4. Grievance Categories (23 Total) ==========
-INSERT INTO grievance_categories (category_id, category_code, display_name, icon_class, is_shared_utility, default_priority, monthly_threshold_limit) VALUES
+INSERT IGNORE INTO grievance_categories (category_id, category_code, display_name, icon_class, is_shared_utility, default_priority, monthly_threshold_limit) VALUES
 (1, 'AC_COOLING', 'AC Not Cooling', 'bi-thermometer-snow', FALSE, 'MEDIUM', 100),
 (2, 'WATER_OUTAGE', 'Water Supply Cut', 'bi-droplet-half', TRUE, 'HIGH', 80),
 (3, 'HOT_COLD_WATER', 'Hot/Cold Water Dispenser', 'bi-cup-hot', TRUE, 'MEDIUM', 80),
@@ -131,7 +130,7 @@ INSERT INTO grievance_categories (category_id, category_code, display_name, icon
 (23, 'STUDENT_DISPUTES', 'Student Affairs & Hostel Mediation', 'bi-people', FALSE, 'MEDIUM', 30);
 
 -- ========== 5. Routing Rules ==========
-INSERT INTO routing_rules (category_id, location_scope, target_dept_id) VALUES
+INSERT IGNORE INTO routing_rules (category_id, location_scope, target_dept_id) VALUES
 -- 1. AC_COOLING -> HOSTEL_MAINT
 (1, 'HOSTEL', 1),
 (1, 'ACADEMIC_BLOCK', 1),
@@ -199,7 +198,7 @@ INSERT INTO routing_rules (category_id, location_scope, target_dept_id) VALUES
 (23, 'ANY', 13);
 
 -- ========== 6. SLA Policies ==========
-INSERT INTO sla_policies (category_id, priority, ack_deadline_minutes, resolution_deadline_minutes) VALUES
+INSERT IGNORE INTO sla_policies (category_id, priority, ack_deadline_minutes, resolution_deadline_minutes) VALUES
 -- 1. AC_COOLING
 (1, 'LOW', 480, 2880), (1, 'MEDIUM', 240, 1440), (1, 'HIGH', 120, 720), (1, 'CRITICAL', 60, 360),
 -- 2. WATER_OUTAGE
@@ -247,51 +246,51 @@ INSERT INTO sla_policies (category_id, priority, ack_deadline_minutes, resolutio
 -- 23. STUDENT_DISPUTES
 (23, 'LOW', 480, 2880), (23, 'MEDIUM', 240, 1440), (23, 'HIGH', 120, 720), (23, 'CRITICAL', 60, 360);
 
--- ========== 7. Sample Master Incident ==========
-INSERT INTO master_incidents (category_id, assigned_dept_id, building_block, incident_title, normalized_tokens, incident_status, affected_student_count) VALUES
-(2, 2, 'Ganga Tower - Block A', 'Water supply cut off in Ganga Tower - Block A', 'water supply cut off ganga block a', 'OPEN', 3);
+-- ========== 7. Sample Master Incident (Idempotent with master_incident_id = 1) ==========
+INSERT IGNORE INTO master_incidents (master_incident_id, category_id, assigned_dept_id, building_block, incident_title, normalized_tokens, incident_status, affected_student_count) VALUES
+(1, 2, 2, 'Ganga Tower - Block A', 'Water supply cut off in Ganga Tower - Block A', 'water supply cut off ganga block a', 'OPEN', 3);
 
--- ========== 8. Sample Grievance Tickets ==========
+-- ========== 8. Sample Grievance Tickets (Idempotent with fixed ticket_ids 1 to 5) ==========
 -- Ticket 1: Individual AC complaint (Suraj = user_id 18)
-INSERT INTO grievance_tickets (ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
-('SRM-2026-000001', 18, 1, 1, NULL, 'HOSTEL', 'Ganga Tower - Block A', 'G-412', 'My room AC is not cooling properly. Temperature stays at 30 degrees even after 2 hours.', 'MEDIUM', 'SUBMITTED',
+INSERT IGNORE INTO grievance_tickets (ticket_id, ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
+(1, 'SRM-2026-000001', 18, 1, 1, NULL, 'HOSTEL', 'Ganga Tower - Block A', 'G-412', 'My room AC is not cooling properly. Temperature stays at 30 degrees even after 2 hours.', 'MEDIUM', 'SUBMITTED',
  DATE_ADD(NOW(), INTERVAL 240 MINUTE), DATE_ADD(NOW(), INTERVAL 1440 MINUTE));
 
 -- Ticket 2: Water outage linked to master incident (student 18 = Suraj)
-INSERT INTO grievance_tickets (ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
-('SRM-2026-000002', 18, 2, 2, 1, 'HOSTEL', 'Ganga Tower - Block A', 'G-412', 'No water supply since morning in Ganga Tower Block A 4th floor.', 'HIGH', 'ACKNOWLEDGED',
+INSERT IGNORE INTO grievance_tickets (ticket_id, ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
+(2, 'SRM-2026-000002', 18, 2, 2, 1, 'HOSTEL', 'Ganga Tower - Block A', 'G-412', 'No water supply since morning in Ganga Tower Block A 4th floor.', 'HIGH', 'ACKNOWLEDGED',
  DATE_ADD(NOW(), INTERVAL 60 MINUTE), DATE_ADD(NOW(), INTERVAL 360 MINUTE));
 
 -- Ticket 3: Water outage linked to same master incident (student 22 = Vikram, same building)
-INSERT INTO grievance_tickets (ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
-('SRM-2026-000003', 22, 2, 2, 1, 'HOSTEL', 'Ganga Tower - Block A', 'G-415', 'Water not coming in my room since early morning.', 'HIGH', 'SUBMITTED',
+INSERT IGNORE INTO grievance_tickets (ticket_id, ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
+(3, 'SRM-2026-000003', 22, 2, 2, 1, 'HOSTEL', 'Ganga Tower - Block A', 'G-415', 'Water not coming in my room since early morning.', 'HIGH', 'SUBMITTED',
  DATE_ADD(NOW(), INTERVAL 60 MINUTE), DATE_ADD(NOW(), INTERVAL 360 MINUTE));
 
 -- Ticket 4: WiFi issue (student 19 = Ananya)
-INSERT INTO grievance_tickets (ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
-('SRM-2026-000004', 19, 6, 5, NULL, 'HOSTEL', 'Yamuna Tower', 'Y-201', 'WiFi keeps disconnecting every 10 minutes. Cannot attend online classes.', 'HIGH', 'IN_PROGRESS',
+INSERT IGNORE INTO grievance_tickets (ticket_id, ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at) VALUES
+(4, 'SRM-2026-000004', 19, 6, 5, NULL, 'HOSTEL', 'Yamuna Tower', 'Y-201', 'WiFi keeps disconnecting every 10 minutes. Cannot attend online classes.', 'HIGH', 'IN_PROGRESS',
  DATE_ADD(NOW(), INTERVAL 60 MINUTE), DATE_ADD(NOW(), INTERVAL 360 MINUTE));
 
 -- Ticket 5: Mess food quality (student 20 = Rahul)
-INSERT INTO grievance_tickets (ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at, acknowledged_at, resolved_by_dept_at) VALUES
-('SRM-2026-000005', 20, 4, 3, NULL, 'MESS_HALL', 'Annapoorna Mess Complex', 'Counter 3', 'Found hair in today lunch dal. Very unhygienic.', 'MEDIUM', 'AWAITING_STUDENT_CONFIRMATION',
+INSERT IGNORE INTO grievance_tickets (ticket_id, ticket_reference, student_user_id, category_id, assigned_dept_id, master_incident_id, location_scope, building_block, room_or_location, raw_description, priority, status, ack_deadline_at, resolution_deadline_at, acknowledged_at, resolved_by_dept_at) VALUES
+(5, 'SRM-2026-000005', 20, 4, 3, NULL, 'MESS_HALL', 'Annapoorna Mess Complex', 'Counter 3', 'Found hair in today lunch dal. Very unhygienic.', 'MEDIUM', 'AWAITING_STUDENT_CONFIRMATION',
  DATE_ADD(NOW(), INTERVAL 240 MINUTE), DATE_ADD(NOW(), INTERVAL 1440 MINUTE), DATE_SUB(NOW(), INTERVAL 30 MINUTE), DATE_SUB(NOW(), INTERVAL 5 MINUTE));
 
--- ========== 9. Sample Status History ==========
-INSERT INTO complaint_status_history (ticket_id, from_status, to_status, changed_by_user_id, action_note) VALUES
-(2, 'SUBMITTED', 'ACKNOWLEDGED', 32, 'Assigned to water plumbing team for Ganga Tower - Block A'),
-(4, 'SUBMITTED', 'ACKNOWLEDGED', 38, 'ITKM team investigating Yamuna Tower WiFi'),
-(4, 'ACKNOWLEDGED', 'IN_PROGRESS', 38, 'Technician dispatched to check router'),
-(5, 'SUBMITTED', 'ACKNOWLEDGED', 34, 'Mess committee notified about hygiene issue'),
-(5, 'ACKNOWLEDGED', 'IN_PROGRESS', 34, 'Kitchen staff instructed on hygiene protocols'),
-(5, 'IN_PROGRESS', 'AWAITING_STUDENT_CONFIRMATION', 34, 'Kitchen deep-cleaned and staff re-trained. Please confirm if resolved.');
+-- ========== 9. Sample Status History (Idempotent with fixed history_ids 1 to 6) ==========
+INSERT IGNORE INTO complaint_status_history (history_id, ticket_id, from_status, to_status, changed_by_user_id, action_note) VALUES
+(1, 2, 'SUBMITTED', 'ACKNOWLEDGED', 32, 'Assigned to water plumbing team for Ganga Tower - Block A'),
+(2, 4, 'SUBMITTED', 'ACKNOWLEDGED', 38, 'ITKM team investigating Yamuna Tower WiFi'),
+(3, 4, 'ACKNOWLEDGED', 'IN_PROGRESS', 38, 'Technician dispatched to check router'),
+(4, 5, 'SUBMITTED', 'ACKNOWLEDGED', 34, 'Mess committee notified about hygiene issue'),
+(5, 5, 'ACKNOWLEDGED', 'IN_PROGRESS', 34, 'Kitchen staff instructed on hygiene protocols'),
+(6, 5, 'IN_PROGRESS', 'AWAITING_STUDENT_CONFIRMATION', 34, 'Kitchen deep-cleaned and staff re-trained. Please confirm if resolved.');
 
--- ========== 10. Sample Ticket Messages ==========
-INSERT INTO ticket_messages (ticket_id, sender_user_id, sender_role, message_body, is_system_alert) VALUES
-(2, 32, 'ROLE_DEPT_STAFF', 'We have identified the issue with the water pump for Ganga Tower Block A. Repair team is on the way.', FALSE),
-(2, 18, 'ROLE_STUDENT', 'Thank you for the quick response. How long will it take?', FALSE),
-(2, 32, 'ROLE_DEPT_STAFF', 'Estimated 2 hours for repair. We will update you.', FALSE),
-(4, 38, 'ROLE_DEPT_STAFF', 'We are checking the Yamuna Tower access point router configuration. Please try restarting your device once.', FALSE),
-(4, 19, 'ROLE_STUDENT', 'I already tried restarting. The issue persists.', FALSE),
-(5, 34, 'ROLE_DEPT_STAFF', 'We sincerely apologize for the hygiene issue. The kitchen has been deep cleaned and staff re-trained on protocols.', FALSE),
-(5, 34, 'ROLE_DEPT_STAFF', 'We have marked this as resolved. Please confirm if you are satisfied with the resolution.', FALSE);
+-- ========== 10. Sample Ticket Messages (Idempotent with fixed message_ids 1 to 7) ==========
+INSERT IGNORE INTO ticket_messages (message_id, ticket_id, sender_user_id, sender_role, message_body, is_system_alert) VALUES
+(1, 2, 32, 'ROLE_DEPT_STAFF', 'We have identified the issue with the water pump for Ganga Tower Block A. Repair team is on the way.', FALSE),
+(2, 2, 18, 'ROLE_STUDENT', 'Thank you for the quick response. How long will it take?', FALSE),
+(3, 2, 32, 'ROLE_DEPT_STAFF', 'Estimated 2 hours for repair. We will update you.', FALSE),
+(4, 4, 38, 'ROLE_DEPT_STAFF', 'We are checking the Yamuna Tower access point router configuration. Please try restarting your device once.', FALSE),
+(5, 4, 19, 'ROLE_STUDENT', 'I already tried restarting. The issue persists.', FALSE),
+(6, 5, 34, 'ROLE_DEPT_STAFF', 'We sincerely apologize for the hygiene issue. The kitchen has been deep cleaned and staff re-trained on protocols.', FALSE),
+(7, 5, 34, 'ROLE_DEPT_STAFF', 'We have marked this as resolved. Please confirm if you are satisfied with the resolution.', FALSE);

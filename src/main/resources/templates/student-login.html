@@ -206,9 +206,13 @@
                     <i class="bi bi-envelope-fill"></i> Send OTP
                 </button>
 
-                <div class="info-note">
+                <div class="info-note" th:if="${demoMode}">
                     <i class="bi bi-shield-check text-primary me-1"></i>
-                    Official college emails (@srmap.edu.in or @srmist.edu.in). Dispatches real OTP to email + supports instant passkey <strong>123456</strong>.
+                    Official college emails (@srmap.edu.in or @srmist.edu.in). Demo passkey <strong>123456</strong> enabled.
+                </div>
+                <div class="info-note" th:if="${!demoMode}">
+                    <i class="bi bi-shield-check text-primary me-1"></i>
+                    Official college emails (@srmap.edu.in or @srmist.edu.in). A 6-digit verification code will be sent to your inbox.
                 </div>
             </form>
 
@@ -227,15 +231,18 @@
                     <input type="text" name="otp" id="otpInputField" class="form-control form-control-custom otp-input"
                            maxlength="6" placeholder="••••••" required autofocus>
                     
-                    <div class="text-center mt-2">
+                    <div th:if="${demoMode}" class="text-center mt-2">
                         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 shadow-sm"
                                 onclick="document.getElementById('otpInputField').value='123456';">
-                            ⚡ Quick Fill Passkey: <strong>123456</strong>
+                            ⚡ Quick Fill Demo Passkey: <strong>123456</strong>
                         </button>
                     </div>
 
-                    <div class="form-text text-center text-muted small mt-2">
-                        <i class="bi bi-shield-check text-success me-1"></i> Check your email (or <strong>Spam folder</strong>) for the real code, or click <strong>123456</strong> for instant login.
+                    <div th:if="${demoMode}" class="form-text text-center text-muted small mt-2">
+                        <i class="bi bi-shield-check text-success me-1"></i> Check your email (or Spam folder), or use demo passkey 123456.
+                    </div>
+                    <div th:if="${!demoMode}" class="form-text text-center text-muted small mt-2">
+                        <i class="bi bi-shield-check text-success me-1"></i> Check your official email (and Spam folder) for the 6-digit verification code.
                     </div>
                 </div>
 

@@ -214,6 +214,29 @@ public class StudentController {
             return "redirect:/student/dashboard";
         }
 
+        // Usability validation: prevent blank or extremely short submissions
+        if (request.getRawDescription() == null || request.getRawDescription().trim().isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Complaint description cannot be empty. Please describe the problem.");
+            return "redirect:/student/dashboard";
+        }
+        if (request.getRawDescription().trim().length() < 10) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please provide a more descriptive complaint (at least 10 characters).");
+            return "redirect:/student/dashboard";
+        }
+
+        // Prevent rapid duplicate complaint submissions
+        List<GrievanceTicket> recentTickets = ticketDao.findByStudentUserId(student.getUserId());
+        boolean isDuplicate = recentTickets.stream().anyMatch(t ->
+                t.getRawDescription() != null &&
+                t.getRawDescription().trim().equalsIgnoreCase(request.getRawDescription().trim()) &&
+                t.getCreatedAt() != null &&
+                t.getCreatedAt().isAfter(LocalDateTime.now().minusMinutes(2))
+        );
+        if (isDuplicate) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Duplicate submission detected: You submitted this grievance within the last 2 minutes. Please check your existing ticket.");
+            return "redirect:/student/dashboard";
+        }
+
         try {
             // Predict category, department, emergency status, and location via Campus Intelligence Engine
             com.srmresolve.dto.IssuePredictionResult prediction = intelligenceEngine.predictIssue(request.getRawDescription(), student);
@@ -275,9 +298,10 @@ public class StudentController {
             LocalDateTime ackDeadline = now.plusMinutes(ackMinutes);
             LocalDateTime resDeadline = now.plusMinutes(resMinutes);
 
-            // 4. Generate Ticket Reference (e.g. SRM-2026-000006)
+            // 4. Generate Ticket Reference with dynamic calendar year (e.g. SRM-2026-000006)
             long seq = ticketDao.getNextTicketSequence();
-            String ticketRef = String.format("SRM-2026-%06d", seq);
+            int currentYear = java.time.LocalDate.now().getYear();
+            String ticketRef = String.format("SRM-%d-%06d", currentYear, seq);
 
             GrievanceTicket ticket = new GrievanceTicket();
             ticket.setTicketReference(ticketRef);
@@ -318,7 +342,7 @@ public class StudentController {
             }
             if (notificationService != null) {
                 notificationService.notifyStudentTicketStatusChange(ticketId, TicketStatus.SUBMITTED,
-                        prediction.isEmergency() ? "🚨 EMERGENCY SOS DISPATCHED: Quick response team alerted." : "Grievance registered in department queue.");
+                        prediction.isEmergency() ? "🚨 EMERGENCY GRIEVANCE LOGGED: Prioritized for immediate attention." : "Grievance registered in department queue.");
             }
 
             // 8. Handle file attachment upload (Section 6.7)
@@ -327,7 +351,7 @@ public class StudentController {
             if (prediction.isEmergency()) {
                 redirectAttributes.addFlashAttribute("emergencyAlertNotice", prediction.getEmergencyActionNotice());
                 redirectAttributes.addFlashAttribute("successMessage",
-                        "🚨 EMERGENCY DISPATCHED: " + ticketRef + " routed to " + prediction.getTargetDeptName() + " with 15-min critical response SLA!");
+                        "🚨 EMERGENCY GRIEVANCE LOGGED: " + ticketRef + " routed to " + prediction.getTargetDeptName() + " with critical priority response SLA.");
             } else {
                 redirectAttributes.addFlashAttribute("successMessage",
                         "Grievance " + ticketRef + " filed successfully! Assigned to " + prediction.getTargetDeptName() + "." +
@@ -372,14 +396,28 @@ public class StudentController {
         return "redirect:/student/dashboard";
     }
 
+    private static final java.util.Set<String> ALLOWED_EXTENSIONS = java.util.Set.of(".jpg", ".jpeg", ".png", ".webp", ".pdf");
+
     private void handleAttachmentUpload(Long ticketId, Long studentUserId, MultipartFile file) {
         if (file == null || file.isEmpty()) return;
+
+        // Size check (max 10MB)
+        if (file.getSize() > 10 * 1024 * 1024) {
+            log.warn("Attachment rejected: file size exceeds 10MB limit ({} bytes)", file.getSize());
+            return;
+        }
 
         try {
             String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "attachment.jpg";
             String ext = "";
             int i = originalName.lastIndexOf('.');
-            if (i > 0) ext = originalName.substring(i);
+            if (i > 0) ext = originalName.substring(i).toLowerCase();
+
+            // Validate against safe allowed file types
+            if (!ALLOWED_EXTENSIONS.contains(ext)) {
+                log.warn("Attachment rejected: unsupported file extension '{}'. Only JPG, PNG, WEBP, and PDF files are allowed.", ext);
+                return;
+            }
 
             // Server-side random filename outside public directory (Section 6.7)
             String safeFileName = UUID.randomUUID() + ext;

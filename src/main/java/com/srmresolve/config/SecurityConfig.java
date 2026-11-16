@@ -34,7 +34,9 @@ public class SecurityConfig {
     public org.springframework.security.web.AuthenticationEntryPoint customAuthenticationEntryPoint() {
         return (request, response, authException) -> {
             String uri = request.getRequestURI();
-            if (uri.startsWith("/student")) {
+            if (uri.startsWith("/api/")) {
+                response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            } else if (uri.startsWith("/student")) {
                 response.sendRedirect("/student-login");
             } else if (uri.startsWith("/department")) {
                 response.sendRedirect("/authority-login");

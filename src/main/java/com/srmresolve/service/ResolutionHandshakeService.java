@@ -49,6 +49,9 @@ public class ResolutionHandshakeService {
     public void acknowledgeTicket(Long ticketId, Long staffUserId, String note) {
         GrievanceTicket ticket = getTicketOrThrow(ticketId);
         TicketStatus from = ticket.getStatus();
+        if (from != TicketStatus.SUBMITTED && from != TicketStatus.REOPENED) {
+            throw new IllegalStateException("Ticket cannot be acknowledged from status: " + from + ". Ticket must be in SUBMITTED or REOPENED state.");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         ticketDao.recordAcknowledgment(ticketId, staffUserId, now);
@@ -74,6 +77,9 @@ public class ResolutionHandshakeService {
     public void setEtaAndProgress(Long ticketId, Long staffUserId, LocalDateTime eta, String note) {
         GrievanceTicket ticket = getTicketOrThrow(ticketId);
         TicketStatus from = ticket.getStatus();
+        if (from != TicketStatus.ACKNOWLEDGED && from != TicketStatus.REOPENED) {
+            throw new IllegalStateException("Ticket cannot be moved to IN_PROGRESS from status: " + from + ". Ticket must be ACKNOWLEDGED or REOPENED.");
+        }
 
         ticketDao.updateEta(ticketId, eta);
         lifecycleDao.insertStatusHistory(ticketId, from.name(), TicketStatus.IN_PROGRESS.name(),
@@ -98,6 +104,9 @@ public class ResolutionHandshakeService {
     public void markResolvedByDept(Long ticketId, Long staffUserId, String resolutionSummary) {
         GrievanceTicket ticket = getTicketOrThrow(ticketId);
         TicketStatus from = ticket.getStatus();
+        if (from != TicketStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Ticket cannot be marked resolved from status: " + from + ". Work must be IN_PROGRESS first.");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         ticketDao.recordResolutionByDept(ticketId, now);
@@ -129,6 +138,9 @@ public class ResolutionHandshakeService {
         }
 
         TicketStatus from = ticket.getStatus();
+        if (from != TicketStatus.AWAITING_STUDENT_CONFIRMATION) {
+            throw new IllegalStateException("Ticket cannot be closed from status: " + from + ". Must be in AWAITING_STUDENT_CONFIRMATION status.");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         ticketDao.recordClosureByStudent(ticketId, now);
@@ -159,6 +171,9 @@ public class ResolutionHandshakeService {
         }
 
         TicketStatus from = ticket.getStatus();
+        if (from != TicketStatus.AWAITING_STUDENT_CONFIRMATION) {
+            throw new IllegalStateException("Ticket cannot be closed from status: " + from + ". Must be in AWAITING_STUDENT_CONFIRMATION status.");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         ticketDao.recordClosureByStudent(ticketId, now, rating, studentFeedback);
@@ -191,6 +206,9 @@ public class ResolutionHandshakeService {
         }
 
         TicketStatus from = ticket.getStatus();
+        if (from != TicketStatus.AWAITING_STUDENT_CONFIRMATION) {
+            throw new IllegalStateException("Ticket cannot be reopened from status: " + from + ". Must be in AWAITING_STUDENT_CONFIRMATION status.");
+        }
         LocalDateTime now = LocalDateTime.now();
 
         ticketDao.recordReopenedByStudent(ticketId, now);

@@ -1,33 +1,11 @@
 -- =====================================================
--- SRM-RESOLVE: Complete MySQL Schema
--- Tables created in strict foreign-key dependency order
+-- SRM-RESOLVE: Non-Destructive Persistent MySQL Schema
+-- Tables created safely with IF NOT EXISTS in foreign-key dependency order
+-- Application restarts preserve all student accounts, complaints, and history
 -- =====================================================
 
--- Drop views first
-DROP VIEW IF EXISTS v_department_satisfaction;
-DROP VIEW IF EXISTS v_location_category_heatmap;
-DROP VIEW IF EXISTS v_department_sla_performance;
-DROP VIEW IF EXISTS v_category_monthly_anomaly_radar;
-
--- Drop tables in reverse dependency order
-DROP TABLE IF EXISTS in_app_notifications;
-DROP TABLE IF EXISTS audit_logs;
-DROP TABLE IF EXISTS escalation_logs;
-DROP TABLE IF EXISTS ticket_attachments;
-DROP TABLE IF EXISTS ticket_messages;
-DROP TABLE IF EXISTS complaint_status_history;
-DROP TABLE IF EXISTS grievance_tickets;
-DROP TABLE IF EXISTS master_incidents;
-DROP TABLE IF EXISTS sla_policies;
-DROP TABLE IF EXISTS routing_rules;
-DROP TABLE IF EXISTS grievance_categories;
-DROP TABLE IF EXISTS email_otp_verifications;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS student_directory;
-DROP TABLE IF EXISTS departments;
-
 -- ========== Table 1: departments ==========
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
     dept_id INT AUTO_INCREMENT PRIMARY KEY,
     dept_code VARCHAR(50) UNIQUE NOT NULL,
     dept_name VARCHAR(120) NOT NULL,
@@ -37,7 +15,7 @@ CREATE TABLE departments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 2: student_directory ==========
-CREATE TABLE student_directory (
+CREATE TABLE IF NOT EXISTS student_directory (
     reg_no VARCHAR(20) PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     official_email VARCHAR(120) UNIQUE NOT NULL,
@@ -49,7 +27,7 @@ CREATE TABLE student_directory (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 3: users ==========
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     reg_or_staff_id VARCHAR(30) UNIQUE NOT NULL,
     full_name VARCHAR(100) NOT NULL,
@@ -69,7 +47,7 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 4: email_otp_verifications ==========
-CREATE TABLE email_otp_verifications (
+CREATE TABLE IF NOT EXISTS email_otp_verifications (
     otp_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(120) NOT NULL,
     reg_no VARCHAR(20) NOT NULL,
@@ -86,7 +64,7 @@ CREATE TABLE email_otp_verifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 5: grievance_categories ==========
-CREATE TABLE grievance_categories (
+CREATE TABLE IF NOT EXISTS grievance_categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
     category_code VARCHAR(40) UNIQUE NOT NULL,
     display_name VARCHAR(80) NOT NULL,
@@ -97,7 +75,7 @@ CREATE TABLE grievance_categories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 6: routing_rules ==========
-CREATE TABLE routing_rules (
+CREATE TABLE IF NOT EXISTS routing_rules (
     rule_id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
     location_scope ENUM('HOSTEL', 'ACADEMIC_BLOCK', 'MESS_HALL', 'ANY') NOT NULL,
@@ -108,7 +86,7 @@ CREATE TABLE routing_rules (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 7: sla_policies ==========
-CREATE TABLE sla_policies (
+CREATE TABLE IF NOT EXISTS sla_policies (
     sla_id INT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
     priority ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NOT NULL,
@@ -121,7 +99,7 @@ CREATE TABLE sla_policies (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 8: master_incidents ==========
-CREATE TABLE master_incidents (
+CREATE TABLE IF NOT EXISTS master_incidents (
     master_incident_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     category_id INT NOT NULL,
     assigned_dept_id INT NOT NULL,
@@ -140,7 +118,7 @@ CREATE TABLE master_incidents (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 9: grievance_tickets ==========
-CREATE TABLE grievance_tickets (
+CREATE TABLE IF NOT EXISTS grievance_tickets (
     ticket_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_reference VARCHAR(30) UNIQUE NOT NULL,
     student_user_id BIGINT NOT NULL,
@@ -182,7 +160,7 @@ CREATE TABLE grievance_tickets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 10: complaint_status_history ==========
-CREATE TABLE complaint_status_history (
+CREATE TABLE IF NOT EXISTS complaint_status_history (
     history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_id BIGINT NOT NULL,
     from_status VARCHAR(40) NULL,
@@ -195,7 +173,7 @@ CREATE TABLE complaint_status_history (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 11: ticket_messages ==========
-CREATE TABLE ticket_messages (
+CREATE TABLE IF NOT EXISTS ticket_messages (
     message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_id BIGINT NOT NULL,
     sender_user_id BIGINT NOT NULL,
@@ -208,7 +186,7 @@ CREATE TABLE ticket_messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 12: ticket_attachments ==========
-CREATE TABLE ticket_attachments (
+CREATE TABLE IF NOT EXISTS ticket_attachments (
     attachment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_id BIGINT NOT NULL,
     uploaded_by_user_id BIGINT NOT NULL,
@@ -222,7 +200,7 @@ CREATE TABLE ticket_attachments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 13: escalation_logs ==========
-CREATE TABLE escalation_logs (
+CREATE TABLE IF NOT EXISTS escalation_logs (
     log_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ticket_id BIGINT NOT NULL,
     previous_level INT NOT NULL,
@@ -234,7 +212,7 @@ CREATE TABLE escalation_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 14: audit_logs ==========
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     audit_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     actor_user_id BIGINT NULL,
     action_type VARCHAR(60) NOT NULL,
@@ -246,7 +224,7 @@ CREATE TABLE audit_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ========== Table 15: in_app_notifications ==========
-CREATE TABLE in_app_notifications (
+CREATE TABLE IF NOT EXISTS in_app_notifications (
     notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     recipient_user_id BIGINT NOT NULL,
     title VARCHAR(120) NOT NULL,

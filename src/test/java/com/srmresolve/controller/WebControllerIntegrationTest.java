@@ -49,7 +49,7 @@ class WebControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Suraj Sharma")))
                 .andExpect(content().string(containsString("File New Grievance")))
-                .andExpect(content().string(containsString("Enhance with AI")));
+                .andExpect(content().string(containsString("Format Complaint")));
     }
 
     @Test
