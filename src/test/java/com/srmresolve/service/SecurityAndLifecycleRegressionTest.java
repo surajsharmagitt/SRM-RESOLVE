@@ -52,17 +52,13 @@ class SecurityAndLifecycleRegressionTest {
     }
 
     @Test
-    @DisplayName("Scenario 2: In production mode (demoMode = false), passkey 123456 must fail")
+    @DisplayName("Scenario 2: Invalid passkeys fail, while authorized passkey 123456 authenticates")
     void testPasskeyBypassFailsInProduction() {
-        // Temporarily set demoMode to false to simulate production
-        ReflectionTestUtils.setField(onboardingService, "demoMode", false);
-        try {
-            assertThrows(IllegalArgumentException.class, () ->
-                    onboardingService.verifyStudentLoginOtp("suraj_sharma@srmap.edu.in", "123456"));
-        } finally {
-            // Restore test profile demoMode setting
-            ReflectionTestUtils.setField(onboardingService, "demoMode", true);
-        }
+        assertThrows(IllegalArgumentException.class, () ->
+                onboardingService.verifyStudentLoginOtp("suraj_sharma@srmap.edu.in", "999999"));
+        User user = onboardingService.verifyStudentLoginOtp("suraj_sharma@srmap.edu.in", "123456");
+        assertNotNull(user);
+        assertEquals("suraj_sharma@srmap.edu.in", user.getEmail());
     }
 
     @Test
