@@ -23,8 +23,8 @@ public class VivaSimulationService {
     private final JdbcTemplate jdbcTemplate;
     private final TicketLifecycleDao lifecycleDao;
 
-    @Value("${app.demo-mode:false}")
-    private boolean demoMode;
+    @Value("${app.demo-mode:true}")
+    private boolean demoMode = true;
 
     public VivaSimulationService(JdbcTemplate jdbcTemplate, TicketLifecycleDao lifecycleDao) {
         this.jdbcTemplate = jdbcTemplate;

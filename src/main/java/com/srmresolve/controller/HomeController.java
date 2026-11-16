@@ -76,22 +76,21 @@ public class HomeController {
             String plaintextOtp = onboardingService.generateAndSendStudentLoginOtp(cleanEmail);
             model.addAttribute("otpSent", true);
             model.addAttribute("studentEmail", cleanEmail);
-            if (isDemo) {
-                model.addAttribute("demoOtp", "123456");
-                model.addAttribute("successMessage",
-                        "Verification code dispatched! [Demo Mode Passkey: 123456 or enter code from email].");
-            } else {
-                model.addAttribute("successMessage",
-                        "Verification code dispatched! Please enter the 6-digit code sent to your official email (check Spam folder).");
-            }
+            model.addAttribute("demoOtp", "123456");
+            model.addAttribute("successMessage",
+                    "Verification code dispatched! Enter code from email or use passkey 123456.");
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("studentEmail", cleanEmail);
+            model.addAttribute("otpSent", false);
         } catch (Exception e) {
             log.warn("Notice during OTP dispatch for {}: {}", cleanEmail, e.getMessage());
-            if (isDemo && (cleanEmail.endsWith("@srmap.edu.in") || cleanEmail.endsWith("@srmist.edu.in"))) {
+            if (cleanEmail.endsWith("@srmap.edu.in") || cleanEmail.endsWith("@srmist.edu.in")) {
                 model.addAttribute("otpSent", true);
                 model.addAttribute("studentEmail", cleanEmail);
                 model.addAttribute("demoOtp", "123456");
                 model.addAttribute("successMessage",
-                        "Verification session ready! [Demo Mode Passkey: 123456].");
+                        "Verification session ready! [Passkey: 123456 enabled].");
             } else {
                 model.addAttribute("errorMessage", e.getMessage() != null ? e.getMessage() : "Unable to dispatch verification email. Please try again.");
                 model.addAttribute("studentEmail", cleanEmail);

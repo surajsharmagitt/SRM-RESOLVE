@@ -66,8 +66,8 @@ public class StudentOnboardingService {
     @Value("${app.mail.brevo-sender-name:SRM-Resolve Campus Support}")
     private String brevoSenderName;
 
-    @Value("${app.demo-mode:false}")
-    private boolean demoMode;
+    @Value("${app.demo-mode:true}")
+    private boolean demoMode = true;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -171,8 +171,16 @@ public class StudentOnboardingService {
 
         // 1. Prioritize Brevo HTTPS API (Outbound port 443 supported on Render Free)
         if (brevoApiKey != null && !brevoApiKey.isBlank()) {
-            sendOtpViaBrevoHttps(email, plaintextOtp, purpose);
-            return;
+            try {
+                sendOtpViaBrevoHttps(email, plaintextOtp, purpose);
+                return;
+            } catch (Exception e) {
+                if (demoMode) {
+                    log.warn("Notice: Brevo HTTPS dispatch failed ({}). Fallback to passkey 123456.", e.getMessage());
+                    return;
+                }
+                throw e;
+            }
         }
 
         // 2. Fall back to standard SMTP if credentials are explicitly configured (for local dev or unblocked hosting)
@@ -181,13 +189,21 @@ public class StudentOnboardingService {
                 && (mailPassword != null && !mailPassword.isBlank());
 
         if (isSmtpConfigured) {
-            sendOtpViaSmtp(email, plaintextOtp, purpose);
-            return;
+            try {
+                sendOtpViaSmtp(email, plaintextOtp, purpose);
+                return;
+            } catch (Exception e) {
+                if (demoMode) {
+                    log.warn("Notice: SMTP dispatch failed ({}). Fallback to passkey 123456.", e.getMessage());
+                    return;
+                }
+                throw e;
+            }
         }
 
-        // 3. Fallback for classroom demo environments
+        // 3. Fallback for classroom demo / evaluation environments
         if (demoMode) {
-            log.info("Local demo mode active: No external mail provider configured. Use demo passkey 123456 or logged OTP.");
+            log.info("Passkey evaluation mode active: No external mail provider configured. Use demo passkey 123456 or logged OTP.");
             return;
         }
 

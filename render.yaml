@@ -14,7 +14,7 @@ services:
       - key: TZ
         value: Asia/Kolkata
       - key: APP_DEMO_MODE
-        value: "false"
+        value: "true"
       - key: BREVO_API_KEY
         sync: false
       - key: BREVO_SENDER_EMAIL
