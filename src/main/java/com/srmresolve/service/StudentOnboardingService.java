@@ -1,5 +1,7 @@
 package com.srmresolve.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.srmresolve.dao.OtpDao;
 import com.srmresolve.dao.StudentDirectoryDao;
 import com.srmresolve.dao.UserDao;
@@ -17,9 +19,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -38,7 +48,7 @@ public class StudentOnboardingService {
     @Value("${app.mail.allowed-domains:srmap.edu.in}")
     private String allowedDomains;
 
-    @Value("${app.mail.from:}")
+    @Value("${app.mail.from:noreply@srmap.edu.in}")
     private String mailFrom;
 
     @Value("${spring.mail.username:}")
@@ -47,10 +57,30 @@ public class StudentOnboardingService {
     @Value("${spring.mail.password:}")
     private String mailPassword;
 
+    @Value("${app.mail.brevo-api-key:}")
+    private String brevoApiKey;
+
+    @Value("${app.mail.brevo-sender-email:}")
+    private String brevoSenderEmail;
+
+    @Value("${app.mail.brevo-sender-name:SRM-Resolve Campus Support}")
+    private String brevoSenderName;
+
     @Value("${app.demo-mode:false}")
     private boolean demoMode;
 
     private final SecureRandom secureRandom = new SecureRandom();
+
+    private HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    void setHttpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired
     public StudentOnboardingService(UserDao userDao,
@@ -130,29 +160,120 @@ public class StudentOnboardingService {
     }
 
     private void sendOtpEmail(String email, String plaintextOtp, OtpPurpose purpose) {
-        log.info("=================================================");
-        log.info("🔑 SRM-RESOLVE VERIFICATION CODE FOR [{}]: {}", email, plaintextOtp);
-        log.info("   Purpose: {} | Valid for 10 minutes", purpose);
-        log.info("=================================================");
+        if (demoMode) {
+            log.info("=================================================");
+            log.info("🔑 SRM-RESOLVE DEMO OTP FOR [{}]: {}", email, plaintextOtp);
+            log.info("   Purpose: {} | Valid for 10 minutes", purpose);
+            log.info("=================================================");
+        } else {
+            log.info("🔑 SRM-RESOLVE OTP generated for [{}], purpose: {}.", email, purpose);
+        }
 
-        // Determine effective sender email address (never allow empty string to trigger MailParseException)
+        // 1. Prioritize Brevo HTTPS API (Outbound port 443 supported on Render Free)
+        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+            sendOtpViaBrevoHttps(email, plaintextOtp, purpose);
+            return;
+        }
+
+        // 2. Fall back to standard SMTP if credentials are explicitly configured (for local dev or unblocked hosting)
+        boolean isSmtpConfigured = mailSender.isPresent()
+                && (mailUsername != null && !mailUsername.isBlank())
+                && (mailPassword != null && !mailPassword.isBlank());
+
+        if (isSmtpConfigured) {
+            sendOtpViaSmtp(email, plaintextOtp, purpose);
+            return;
+        }
+
+        // 3. Fallback for classroom demo environments
+        if (demoMode) {
+            log.info("Local demo mode active: No external mail provider configured. Use demo passkey 123456 or logged OTP.");
+            return;
+        }
+
+        // 4. Production environment with no mail configuration
+        throw new IllegalStateException("Campus email service is not configured. "
+                + "Because Render Free blocks outbound SMTP ports (25, 465, 587), please configure the "
+                + "BREVO_API_KEY and BREVO_SENDER_EMAIL environment variables in your Render service dashboard.");
+    }
+
+    private void sendOtpViaBrevoHttps(String recipientEmail, String plaintextOtp, OtpPurpose purpose) {
+        String senderEmail = (brevoSenderEmail != null && !brevoSenderEmail.isBlank())
+                ? brevoSenderEmail.trim()
+                : ((mailFrom != null && !mailFrom.isBlank()) ? mailFrom.trim() : "noreply@srmap.edu.in");
+
+        if (!senderEmail.contains("@")) {
+            senderEmail = "noreply@srmap.edu.in";
+        }
+
+        String senderName = (brevoSenderName != null && !brevoSenderName.isBlank())
+                ? brevoSenderName.trim()
+                : "SRM-Resolve Campus Support";
+
+        try {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("sender", Map.of("name", senderName, "email", senderEmail));
+            payload.put("to", List.of(Map.of("email", recipientEmail, "name", "SRM Student")));
+            payload.put("subject", "SRM-Resolve OTP: " + plaintextOtp + " (Valid for 10 mins)");
+            payload.put("htmlContent", "<!DOCTYPE html><html><body style='font-family:sans-serif;line-height:1.6;color:#1e293b;padding:24px;'>"
+                    + "<div style='max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:32px;box-shadow:0 4px 12px rgba(0,0,0,0.05);'>"
+                    + "<h2 style='color:#2563eb;margin-top:0;'>SRM-Resolve Student Verification</h2>"
+                    + "<p>Dear Student,</p>"
+                    + "<p>Use the following 6-digit verification code to complete your login or registration on the SRM-AP Campus Infrastructure Portal:</p>"
+                    + "<div style='font-size:32px;font-weight:800;letter-spacing:8px;color:#0f172a;background:#f8fafc;padding:16px 24px;text-align:center;border-radius:8px;border:1px dashed #cbd5e1;margin:24px 0;'>"
+                    + plaintextOtp + "</div>"
+                    + "<p style='font-size:14px;color:#64748b;'>This verification code is valid for <strong>10 minutes</strong>. Never share this code with anyone.</p>"
+                    + "<hr style='border:none;border-top:1px solid #e2e8f0;margin:24px 0;'/>"
+                    + "<p style='font-size:12px;color:#94a3b8;margin-bottom:0;'>SRM-Resolve Campus Support Team<br/>SRM University-AP, Amaravati</p>"
+                    + "</div></body></html>");
+            payload.put("textContent", "Dear Student,\n\nYour SRM-Resolve 6-digit verification code is:\n\n"
+                    + "   " + plaintextOtp + "\n\n"
+                    + "This code is valid for 10 minutes.\n"
+                    + "If you did not request this OTP, please contact Campus IT Helpdesk.\n\n"
+                    + "SRM-Resolve Support Team\nSRM University-AP");
+
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .header("api-key", brevoApiKey.trim())
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            int statusCode = response.statusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+                log.info("Successfully dispatched OTP verification email to {} via Brevo HTTPS API (HTTP {})", recipientEmail, statusCode);
+            } else {
+                String errorDetail = parseBrevoError(response.body(), statusCode);
+                log.error("Brevo API rejected email to {}. HTTP {}: {}", recipientEmail, statusCode, response.body());
+                throw new IllegalStateException("Campus mail delivery failed: Transactional provider rejected dispatch: " + errorDetail);
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to connect to Brevo HTTPS API: {}", e.getMessage(), e);
+            throw new IllegalStateException("Campus mail delivery failed: Unable to connect to transactional mail provider (" + e.getMessage() + ")");
+        }
+    }
+
+    private void sendOtpViaSmtp(String recipientEmail, String plaintextOtp, OtpPurpose purpose) {
         String senderAddress = (mailFrom != null && !mailFrom.isBlank())
                 ? mailFrom.trim()
                 : ((mailUsername != null && !mailUsername.isBlank()) ? mailUsername.trim() : "noreply@srmap.edu.in");
 
-        boolean isMailConfigured = mailSender.isPresent()
-                && (mailUsername != null && !mailUsername.isBlank())
-                && (mailPassword != null && !mailPassword.isBlank());
-
-        if (!isMailConfigured) {
-            log.info("Campus email SMTP credentials not configured. Student verification code logged to server console above.");
-            return;
+        if (!senderAddress.contains("@")) {
+            senderAddress = "noreply@srmap.edu.in";
         }
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(senderAddress);
-            message.setTo(email);
+            message.setTo(recipientEmail);
             message.setSubject("SRM-Resolve OTP: " + plaintextOtp + " (Valid for 10 mins)");
             message.setText("Dear Student,\n\nYour SRM-Resolve 6-digit verification code is:\n\n" +
                             "   " + plaintextOtp + "\n\n" +
@@ -160,14 +281,33 @@ public class StudentOnboardingService {
                             "Use this code to sign in to the SRM-AP Student Infrastructure Portal.\n\n" +
                             "Regards,\nSRM-Resolve Support Team\nSRM University-AP, Amaravati");
             mailSender.get().send(message);
-            log.info("Successfully dispatched verification email to {}", email);
+            log.info("Successfully dispatched verification email via SMTP to {}", recipientEmail);
         } catch (MailAuthenticationException e) {
-            log.warn("SMTP Authentication Failed while sending to {}: {}. OTP remains valid via server console.", email, e.getMessage());
+            log.error("SMTP Authentication Failed while sending to {}: {}", recipientEmail, e.getMessage());
+            throw new IllegalStateException("Campus mail delivery failed: SMTP authentication error. Please check credentials.");
         } catch (MailSendException e) {
-            log.warn("SMTP Send Failed while sending to {} (outbound SMTP port may be blocked by host): {}. OTP remains valid via server console.", email, e.getMessage());
+            log.error("SMTP Send Failed while sending to {}: {}", recipientEmail, e.getMessage());
+            throw new IllegalStateException("Campus mail delivery failed: Unable to connect to mail server (outbound SMTP ports 25, 465, 587 are blocked on Render Free hosting. Please configure BREVO_API_KEY).");
         } catch (Exception e) {
-            log.warn("Notice: Email dispatch via SMTP to {} failed: {}. OTP remains valid via server console.", email, e.getMessage());
+            log.error("Failed to dispatch email via SMTP to {}: {}", recipientEmail, e.getMessage(), e);
+            throw new IllegalStateException("Campus mail delivery failed: " + e.getMessage());
         }
+    }
+
+    private String parseBrevoError(String responseBody, int statusCode) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return "HTTP " + statusCode;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            if (root.has("message")) {
+                return root.get("message").asText() + " (HTTP " + statusCode + ")";
+            }
+            if (root.has("code")) {
+                return root.get("code").asText() + " (HTTP " + statusCode + ")";
+            }
+        } catch (Exception ignored) {}
+        return "HTTP " + statusCode + ": " + responseBody;
     }
 
     /**

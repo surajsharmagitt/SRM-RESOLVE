@@ -14,7 +14,13 @@ services:
       - key: TZ
         value: Asia/Kolkata
       - key: APP_DEMO_MODE
-        value: "true"
+        value: "false"
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: "SRM-Resolve Campus Support"
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD
