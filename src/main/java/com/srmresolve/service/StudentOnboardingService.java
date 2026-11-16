@@ -9,6 +9,8 @@ import com.srmresolve.validator.SrmRegistrationValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -131,27 +133,48 @@ public class StudentOnboardingService {
             log.info("🔑 SRM-RESOLVE verification code generated for [{}], purpose: {}.", email, purpose);
         }
 
-        log.info("📧 Attempting email dispatch: mailSender.isPresent={}, to={}",
-                mailSender.isPresent(), email);
+        if (!mailSender.isPresent()) {
+            if (demoMode) {
+                log.info("Local demo mode active: SMTP mail sender is absent, proceeding with demo passkey/log.");
+                return;
+            } else {
+                throw new IllegalStateException("Campus mail delivery service is not configured. Please set MAIL_USERNAME and MAIL_PASSWORD environment variables or contact administrator.");
+            }
+        }
 
-        if (mailSender.isPresent()) {
-            java.util.concurrent.CompletableFuture.runAsync(() -> {
-                try {
-                    SimpleMailMessage message = new SimpleMailMessage();
-                    message.setFrom(mailFrom);
-                    message.setTo(email);
-                    message.setSubject("SRM-Resolve OTP: " + plaintextOtp + " (Valid for 10 mins)");
-                    message.setText("Dear Student,\n\nYour SRM-Resolve 6-digit verification code is:\n\n" +
-                                    "   " + plaintextOtp + "\n\n" +
-                                    "This OTP is valid for 10 minutes from receipt.\n" +
-                                    "Use this code to sign in to the SRM-AP Student Infrastructure Portal.\n\n" +
-                                    "Regards,\nSRM-Resolve Support Team\nSRM University-AP, Amaravati");
-                    mailSender.get().send(message);
-                    log.info("✅ Successfully dispatched real verification email to {}", email);
-                } catch (Exception e) {
-                    log.error("❌ Failed to dispatch email via SMTP: {}", e.getMessage(), e);
-                }
-            });
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(mailFrom);
+            message.setTo(email);
+            message.setSubject("SRM-Resolve OTP: " + plaintextOtp + " (Valid for 10 mins)");
+            message.setText("Dear Student,\n\nYour SRM-Resolve 6-digit verification code is:\n\n" +
+                            "   " + plaintextOtp + "\n\n" +
+                            "This OTP is valid for 10 minutes from receipt.\n" +
+                            "Use this code to sign in to the SRM-AP Student Infrastructure Portal.\n\n" +
+                            "Regards,\nSRM-Resolve Support Team\nSRM University-AP, Amaravati");
+            mailSender.get().send(message);
+            log.info("Successfully dispatched verification email to {}", email);
+        } catch (MailAuthenticationException e) {
+            log.error("SMTP Authentication Failed while sending to {}: {}", email, e.getMessage());
+            if (demoMode) {
+                log.warn("Demo mode active: SMTP authentication failed. Use demo passkey 123456 or logged OTP.");
+            } else {
+                throw new IllegalStateException("Campus mail delivery failed: SMTP authentication error. Please check email credentials.");
+            }
+        } catch (MailSendException e) {
+            log.error("SMTP Send Failed while sending to {}: {}", email, e.getMessage());
+            if (demoMode) {
+                log.warn("Demo mode active: SMTP send failed. Use demo passkey 123456 or logged OTP.");
+            } else {
+                throw new IllegalStateException("Campus mail delivery failed: Unable to connect to mail server. Please try again later.");
+            }
+        } catch (Exception e) {
+            log.error("Failed to dispatch email via SMTP to {}: {}", email, e.getMessage(), e);
+            if (demoMode) {
+                log.warn("Demo mode active: Email dispatch failed. Use demo passkey 123456 or logged OTP.");
+            } else {
+                throw new IllegalStateException("Campus mail delivery failed: " + e.getMessage());
+            }
         }
     }
 
@@ -233,8 +256,8 @@ public class StudentOnboardingService {
         String clean = email.trim().toLowerCase();
         int atIndex = clean.lastIndexOf("@");
         String domain = clean.substring(atIndex + 1);
-        // Strictly require official SRM institutional domains (with developer email permitted for testing)
-        if (!domain.equals("srmap.edu.in") && !domain.equals("srmist.edu.in") && !clean.equals("surajxsharma.in@gmail.com")) {
+        // Strictly require official SRM-AP institutional domains
+        if (!domain.equals("srmap.edu.in") && !domain.equals("srmist.edu.in")) {
             throw new IllegalArgumentException("Access restricted: Please enter your official SRM email address ending with @srmap.edu.in.");
         }
     }
@@ -375,6 +398,7 @@ public class StudentOnboardingService {
             throw new IllegalArgumentException("Email and 6-digit verification code are required.");
         }
         String cleanEmail = email.trim().toLowerCase();
+        validateEmailDomain(cleanEmail);
         String cleanOtp = plaintextOtp.trim();
 
         // Demonstration passkey is strictly restricted to isolated demo environments (demoMode = true)
@@ -435,7 +459,6 @@ public class StudentOnboardingService {
         newUser.setEmail(cleanEmail);
         newUser.setPasswordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
         newUser.setRole(Role.ROLE_STUDENT);
-        newUser.setVerificationStatus(VerificationStatus.VERIFIED);
         newUser.setResidenceType(ResidenceType.HOSTELLER);
         newUser.setBuildingBlock(null);
         newUser.setRoomOrZone(null);
@@ -447,6 +470,7 @@ public class StudentOnboardingService {
             newUser.setDepartmentCode(dir.getDepartmentCode());
             newUser.setStudyYear(dir.getCurrentStudyYear());
             newUser.setSection(dir.getSection());
+            newUser.setVerificationStatus(VerificationStatus.VERIFIED);
             log.info("Loaded official roster identity for {}", cleanEmail);
         } else {
             String prefix = cleanEmail.split("@")[0].replace(".", " ").replace("_", " ");
@@ -462,7 +486,8 @@ public class StudentOnboardingService {
             newUser.setDepartmentCode(null);
             newUser.setStudyYear(null);
             newUser.setSection(null);
-            log.info("Initialized new student account for {}. Awaiting first-time profile completion.", cleanEmail);
+            newUser.setVerificationStatus(VerificationStatus.PENDING_VERIFICATION);
+            log.warn("Student {} not found in official roster; placed in PENDING_VERIFICATION.", cleanEmail);
         }
 
         userDao.insert(newUser);

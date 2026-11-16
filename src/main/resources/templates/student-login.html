@@ -196,7 +196,7 @@
                         <i class="bi bi-envelope input-icon"></i>
                         <input type="email" id="studentEmailInput" name="email" class="form-control form-control-custom"
                                placeholder="yourname@srmap.edu.in"
-                               pattern="^([a-zA-Z0-9._%+\-]+@(srmap|srmist)\.edu\.in|surajxsharma\.in@gmail\.com)$"
+                               pattern="^[a-zA-Z0-9._%+\-]+@(srmap|srmist)\.edu\.in$"
                                title="Please enter your official college email ending with @srmap.edu.in or @srmist.edu.in"
                                required autofocus th:value="${studentEmail}">
                     </div>
@@ -273,7 +273,7 @@
         const input = document.getElementById('studentEmailInput');
         if (input) {
             const email = input.value.trim().toLowerCase();
-            if (!email.endsWith('@srmap.edu.in') && !email.endsWith('@srmist.edu.in') && email !== 'surajxsharma.in@gmail.com') {
+            if (!email.endsWith('@srmap.edu.in') && !email.endsWith('@srmist.edu.in')) {
                 alert('Access Restricted: Please enter your official college email ending with @srmap.edu.in or @srmist.edu.in');
                 input.focus();
                 event.preventDefault();

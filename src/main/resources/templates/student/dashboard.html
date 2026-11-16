@@ -155,21 +155,24 @@
                         <strong class="fs-6 text-white mb-0">SRM-AP Emergency, Safety &amp; Anti-Harassment Services</strong>
                     </div>
                     <div class="text-white-50 small mt-1">
-                        For immediate security threats, medical distress, or confidential harassment support, call or type in our AI box below.
+                        Official verified emergency contacts for immediate campus security, medical distress, or anti-ragging support:
                     </div>
                 </div>
             </div>
 
             <!-- Hotline Badges -->
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <a href="tel:+918662447799" class="emergency-call-chip">
-                    <i class="bi bi-shield-lock-fill"></i> Security: <strong>+91-866-2447799</strong>
+                <a href="tel:08632343000" class="emergency-call-chip">
+                    <i class="bi bi-shield-lock-fill"></i> Security: <strong>0863-2343000</strong>
                 </a>
-                <a href="tel:+918662447788" class="emergency-call-chip">
-                    <i class="bi bi-heart-pulse-fill"></i> Health / Ambulance: <strong>+91-866-2447788</strong>
+                <a href="tel:08632343052" class="emergency-call-chip">
+                    <i class="bi bi-heart-pulse-fill"></i> Health Centre (24x7): <strong>0863-2343052</strong>
                 </a>
-                <a href="tel:+918662447777" class="emergency-call-chip">
-                    <i class="bi bi-person-heart"></i> Women / ICC Safety: <strong>+91-866-2447777</strong>
+                <a href="tel:9154947156" class="emergency-call-chip">
+                    <i class="bi bi-person-heart"></i> Student Affairs: <strong>9154947156</strong>
+                </a>
+                <a href="tel:18001805522" class="emergency-call-chip">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Anti-Ragging: <strong>1800-180-5522</strong>
                 </a>
             </div>
         </div>
@@ -315,8 +318,24 @@
                     </div>
 
                     <form th:action="@{/student/tickets}" method="post" enctype="multipart/form-data" id="grievanceForm">
-                        <input type="hidden" name="categoryId" id="selectedCategoryId" value="1">
                         <input type="hidden" name="linkedMasterIncidentId" id="linkedMasterIncidentId">
+
+                        <!-- Category Selection Dropdown (Auto-suggested with manual override) -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-tags-fill text-primary me-1"></i> Grievance Category
+                                <span class="text-muted fw-normal" style="font-size: 0.75rem;">(Auto-suggested from description or choose manually)</span>
+                            </label>
+                            <select name="categoryId" id="categorySelect" class="form-select form-select-sm" required onchange="onCategorySelectChanged(this)">
+                                <option value="" disabled selected>-- Select category or type below to auto-detect --</option>
+                                <option th:each="cat : ${categories}" th:value="${cat.categoryId}" th:text="${cat.displayName} + ' (' + ${cat.categoryCode} + ')'" th:data-name="${cat.displayName}"></option>
+                            </select>
+                            <input type="hidden" id="selectedCategoryId" value="">
+                            <div id="manualOverrideNotice" class="small text-primary mt-1 d-none">
+                                <i class="bi bi-info-circle me-1"></i> Manual category selection active.
+                                <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-decoration-none" onclick="resetCategoryAutoDetect()">Re-enable Auto-detect</button>
+                            </div>
+                        </div>
 
                         <!-- Section 2: Smart Description Box for Any Problem -->
                         <div class="p-3 bg-light rounded-3 border mb-3">
@@ -329,12 +348,12 @@
                                 </button>
                             </div>
                             <div class="text-muted small mb-2" style="font-size: 0.75rem;">
-                                Type your problem in plain language. Automated rule matching detects the responsible department.
+                                Type your problem in plain language. Context-aware Java rules suggest the responsible department and SLA.
                             </div>
 
                             <textarea name="rawDescription" id="rawDescriptionText" class="form-control" rows="3"
-                                      placeholder="Type your issue in simple words... e.g. 'room ac is leaking water', 'voltmeter not working in physics lab', 'leaves all over road near central library'..."
-                                      oninput="onDescriptionChanged()" required>My room AC is not cooling properly and blowing room temperature air.</textarea>
+                                      placeholder="Describe your issue in simple words... e.g. 'lost my student id card', 'washroom tap leaking in Ganga tower', 'central library book return status'..."
+                                      oninput="onDescriptionChanged()" required></textarea>
                             <input type="hidden" name="aiEnhancedDescription" id="aiEnhancedDescription">
 
                             <!-- Structured Format Preview Box -->
@@ -371,20 +390,20 @@
                                 <div class="col-12">
                                     <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Responsible Department</div>
                                     <div class="fw-bold text-dark d-flex align-items-center gap-2" id="predDeptName">
-                                        <i class="bi bi-building-check text-primary"></i> <span>Campus Life &amp; Maintenance (CLM)</span>
+                                        <i class="bi bi-building text-muted"></i> <span class="text-muted">Awaiting complaint description...</span>
                                     </div>
                                 </div>
 
                                 <div class="col-6">
                                     <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Predicted Issue Category</div>
-                                    <div class="fw-semibold text-dark" id="predCategoryName">AC Not Cooling</div>
+                                    <div class="fw-semibold text-dark" id="predCategoryName"><span class="text-muted">Auto-detecting...</span></div>
                                 </div>
 
                                 <div class="col-6">
                                     <div class="text-muted" style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Priority &amp; SLA</div>
                                     <div id="predPrioritySla">
-                                        <span class="badge bg-primary me-1">MEDIUM</span>
-                                        <span class="text-muted small">Ack: 240m | Res: 24h</span>
+                                        <span class="badge bg-secondary me-1">NORMAL</span>
+                                        <span class="text-muted small">Select issue to view SLA</span>
                                     </div>
                                 </div>
 
@@ -721,6 +740,7 @@
     let activeChatTicketId = null;
     let chatPollInterval = null;
     let debounceTimer = null;
+    let isManualCategory = false;
 
     function getCsrfHeaders() {
         const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
@@ -732,6 +752,35 @@
         return headers;
     }
 
+    function onCategorySelectChanged(sel) {
+        if (sel.value) {
+            isManualCategory = true;
+            document.getElementById('manualOverrideNotice')?.classList.remove('d-none');
+            const selectedOption = sel.options[sel.selectedIndex];
+            const catName = selectedOption.getAttribute('data-name') || selectedOption.text;
+            document.getElementById('predCategoryName').innerText = catName;
+            const hiddenId = document.getElementById('selectedCategoryId');
+            if (hiddenId) hiddenId.value = sel.value;
+
+            document.querySelectorAll('.category-tile').forEach(t => t.classList.remove('active'));
+            const matchingTile = document.getElementById('tile-' + sel.value);
+            if (matchingTile) matchingTile.classList.add('active');
+        }
+    }
+
+    function resetCategoryAutoDetect() {
+        isManualCategory = false;
+        document.getElementById('manualOverrideNotice')?.classList.add('d-none');
+        const text = document.getElementById('rawDescriptionText').value.trim();
+        if (text) {
+            fetchPrediction(text);
+        } else {
+            const catSelect = document.getElementById('categorySelect');
+            if (catSelect) catSelect.selectedIndex = 0;
+            resetPredictionCard();
+        }
+    }
+
     function selectCommonTile(el) {
         document.querySelectorAll('.category-tile').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
@@ -739,7 +788,15 @@
         const catId = el.getAttribute('data-cat-id');
         const defaultText = el.getAttribute('data-default-text');
 
-        document.getElementById('selectedCategoryId').value = catId;
+        isManualCategory = true;
+        const catSelect = document.getElementById('categorySelect');
+        if (catSelect) {
+            catSelect.value = catId;
+        }
+        const hiddenId = document.getElementById('selectedCategoryId');
+        if (hiddenId) hiddenId.value = catId;
+        document.getElementById('manualOverrideNotice')?.classList.remove('d-none');
+
         const textarea = document.getElementById('rawDescriptionText');
         textarea.value = defaultText;
 
@@ -750,7 +807,7 @@
         if (debounceTimer) clearTimeout(debounceTimer);
         const text = document.getElementById('rawDescriptionText').value.trim();
         if (!text) {
-            resetPredictionCard();
+            if (!isManualCategory) resetPredictionCard();
             return;
         }
 
@@ -785,10 +842,14 @@
         const warningBox = document.getElementById('emergencyWarningBox');
         const warningText = document.getElementById('emergencyWarningText');
 
-        // Populate hidden category field
-        if (data.categoryId) {
-            document.getElementById('selectedCategoryId').value = data.categoryId;
-            // Also highlight matching tile if exists
+        // Handle category selection
+        if (!isManualCategory && data.categoryId) {
+            const catSelect = document.getElementById('categorySelect');
+            if (catSelect) catSelect.value = data.categoryId;
+            const hiddenId = document.getElementById('selectedCategoryId');
+            if (hiddenId) hiddenId.value = data.categoryId;
+
+            // Highlight matching tile if exists
             document.querySelectorAll('.category-tile').forEach(t => t.classList.remove('active'));
             const matchingTile = document.getElementById('tile-' + data.categoryId);
             if (matchingTile) matchingTile.classList.add('active');
@@ -820,12 +881,34 @@
             <span class="text-muted small">Ack: ${data.ackMinutes}m | Res: ${Math.round(data.resolutionMinutes / 60)}h</span>
         `;
 
+        // Non-incident notification
+        if (data.noIncident) {
+            card.className = 'prediction-card p-3 mb-3 border-info';
+            warningBox.className = 'alert alert-info p-2 mb-2 small fw-bold';
+            warningBox.classList.remove('d-none');
+            warningText.innerHTML = '<i class="bi bi-info-circle me-1"></i> ' + escapeHtml(data.intelligenceReasoning || 'Informational or academic context detected. No active campus incident identified.');
+            submitBtn.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm fs-6';
+            submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i> Submit Grievance';
+            return;
+        }
+
+        // Review needed notification
+        if (data.reviewNeeded && !data.emergency) {
+            card.className = 'prediction-card p-3 mb-3 border-warning';
+            warningBox.className = 'alert alert-warning p-2 mb-2 small fw-bold text-dark';
+            warningBox.classList.remove('d-none');
+            warningText.innerHTML = '<i class="bi bi-question-circle me-1"></i> Category ambiguous: Please select the appropriate category from the dropdown above.';
+            submitBtn.className = 'btn btn-primary w-100 py-3 fw-bold shadow-sm fs-6';
+            submitBtn.innerHTML = '<i class="bi bi-send-fill me-2"></i> Submit Grievance';
+            return;
+        }
+
         // Check if Harassment / ICC (Category 18)
         if (data.categoryCode === 'CYBER_HARASSMENT') {
             card.className = 'prediction-card p-3 mb-3 confidential';
             warningBox.className = 'alert alert-danger p-2 mb-2 small fw-bold';
             warningBox.classList.remove('d-none');
-            warningText.innerText = data.emergencyActionNotice || '🔒 CONFIDENTIAL REPORT REGISTERED: Internal Complaints Committee (ICC) & Women Cell notified under UGC/POSH regulations.';
+            warningText.innerText = data.emergencyActionNotice || '🔒 CONFIDENTIAL REPORT: Internal Complaints Committee (ICC) & Women Cell notified under UGC/POSH regulations.';
 
             submitBtn.className = 'btn btn-confidential-pulse w-100 py-3 fw-bold shadow fs-6';
             submitBtn.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i> Submit Confidential Report to ICC / Women Cell';
@@ -850,9 +933,9 @@
     function resetPredictionCard() {
         const card = document.getElementById('predictionCard');
         card.className = 'prediction-card p-3 mb-3';
-        document.getElementById('predDeptName').innerHTML = '<i class="bi bi-building text-primary"></i> <span>Campus Life &amp; Maintenance (CLM)</span>';
-        document.getElementById('predCategoryName').innerText = 'AC Not Cooling';
-        document.getElementById('predPrioritySla').innerHTML = '<span class="badge bg-primary me-1">MEDIUM</span><span class="text-muted small">Ack: 240m | Res: 24h</span>';
+        document.getElementById('predDeptName').innerHTML = '<i class="bi bi-building text-muted"></i> <span class="text-muted">Awaiting complaint description...</span>';
+        document.getElementById('predCategoryName').innerText = 'Auto-detecting...';
+        document.getElementById('predPrioritySla').innerHTML = '<span class="badge bg-secondary me-1">NORMAL</span><span class="text-muted small">Select issue to view SLA</span>';
         document.getElementById('emergencyWarningBox').classList.add('d-none');
 
         const submitBtn = document.getElementById('submitBtn');
@@ -866,7 +949,14 @@
         const building = btn.getAttribute('data-building');
 
         document.getElementById('linkedMasterIncidentId').value = masterId;
-        document.getElementById('selectedCategoryId').value = catId;
+        const catSelect = document.getElementById('categorySelect');
+        if (catSelect) {
+            catSelect.value = catId;
+            isManualCategory = true;
+            document.getElementById('manualOverrideNotice')?.classList.remove('d-none');
+        }
+        const hiddenId = document.getElementById('selectedCategoryId');
+        if (hiddenId) hiddenId.value = catId;
 
         if (building) {
             document.getElementById('buildingBlockInput').value = building;
@@ -1034,11 +1124,7 @@
         return div.innerHTML;
     }
 
-    // Set first tile active initially
-    window.addEventListener('DOMContentLoaded', () => {
-        const tile1 = document.getElementById('tile-1');
-        if (tile1) tile1.classList.add('active');
-    });
+
 </script>
 </body>
 </html>

@@ -86,7 +86,7 @@ public class HomeController {
             }
         } catch (Exception e) {
             log.warn("Notice during OTP dispatch for {}: {}", cleanEmail, e.getMessage());
-            if (isDemo && (cleanEmail.endsWith("@srmap.edu.in") || cleanEmail.endsWith("@srmist.edu.in") || cleanEmail.equals("surajxsharma.in@gmail.com"))) {
+            if (isDemo && (cleanEmail.endsWith("@srmap.edu.in") || cleanEmail.endsWith("@srmist.edu.in"))) {
                 model.addAttribute("otpSent", true);
                 model.addAttribute("studentEmail", cleanEmail);
                 model.addAttribute("demoOtp", "123456");

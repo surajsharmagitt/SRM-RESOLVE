@@ -28,6 +28,9 @@ public class IssuePredictionResult {
     private boolean emergency;
     private String emergencyActionNotice;
 
+    private boolean reviewNeeded;
+    private boolean noIncident;
+
     private int ackMinutes;
     private int resolutionMinutes;
 
@@ -71,6 +74,12 @@ public class IssuePredictionResult {
 
     public boolean isEmergency() { return emergency; }
     public void setEmergency(boolean emergency) { this.emergency = emergency; }
+
+    public boolean isReviewNeeded() { return reviewNeeded; }
+    public void setReviewNeeded(boolean reviewNeeded) { this.reviewNeeded = reviewNeeded; }
+
+    public boolean isNoIncident() { return noIncident; }
+    public void setNoIncident(boolean noIncident) { this.noIncident = noIncident; }
 
     public String getEmergencyActionNotice() { return emergencyActionNotice; }
     public void setEmergencyActionNotice(String emergencyActionNotice) { this.emergencyActionNotice = emergencyActionNotice; }

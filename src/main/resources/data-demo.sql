@@ -66,7 +66,11 @@ INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_h
 (53, 'DH_DSA', 'Student Affairs Lead (Demo)', 'dsa.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'STUDENT_AFFAIRS_SGRC', 'STAFF_QUARTERS', 13),
 (54, 'DH_COUNSELING', 'Student Counseling Lead (Demo)', 'counseling.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'HEALTH_COUNSELING', 'STAFF_QUARTERS', 14),
 (55, 'DH_COE', 'Controller of Examinations (Demo)', 'coe.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'EXAMINATION_COE', 'STAFF_QUARTERS', 15),
-(56, 'DH_FINANCE', 'Finance Officer (Demo)', 'finance.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'FINANCE_ACCOUNTS', 'STAFF_QUARTERS', 16);
+(56, 'DH_FINANCE', 'Finance Officer (Demo)', 'finance.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'FINANCE_ACCOUNTS', 'STAFF_QUARTERS', 16),
+(71, 'DH_LIBRARY', 'Library Services Lead (Demo)', 'librarian.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'LIBRARY_SERVICES', 'STAFF_QUARTERS', 17),
+(72, 'DH_TRANSPORT', 'Transport Services Lead (Demo)', 'transport.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'TRANSPORT_SERVICES', 'STAFF_QUARTERS', 18),
+(73, 'DH_CRCS', 'CRCS Placement Lead (Demo)', 'crcs.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'CRCS_CAREER_SERVICES', 'STAFF_QUARTERS', 19),
+(74, 'DH_ACADEMIC', 'Academic Affairs Lead (Demo)', 'academic.head@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_HEAD', 'VERIFIED', 'ACADEMIC_AFFAIRS', 'STAFF_QUARTERS', 20);
 
 -- Additional Specialized Staff (user_id = 61 to 66)
 INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_hash, role, verification_status, department_code, residence_type, assigned_dept_id) VALUES
@@ -75,7 +79,11 @@ INSERT IGNORE INTO users (user_id, reg_or_staff_id, full_name, email, password_h
 (63, 'STAFF_DSA1', 'Student Welfare Officer (Demo)', 'dsa.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'STUDENT_AFFAIRS_SGRC', 'STAFF_QUARTERS', 13),
 (64, 'STAFF_COUN1', 'Resident Psychologist (Demo)', 'counseling.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'HEALTH_COUNSELING', 'STAFF_QUARTERS', 14),
 (65, 'STAFF_COE1', 'Assistant Controller of Exams (Demo)', 'coe.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'EXAMINATION_COE', 'STAFF_QUARTERS', 15),
-(66, 'STAFF_FIN1', 'Student Billing Officer (Demo)', 'finance.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'FINANCE_ACCOUNTS', 'STAFF_QUARTERS', 16);
+(66, 'STAFF_FIN1', 'Student Billing Officer (Demo)', 'finance.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'FINANCE_ACCOUNTS', 'STAFF_QUARTERS', 16),
+(75, 'STAFF_LIB1', 'Central Library Staff 1 (Demo)', 'library.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'LIBRARY_SERVICES', 'STAFF_QUARTERS', 17),
+(76, 'STAFF_TRANS1', 'Transport Operations Staff 1 (Demo)', 'transport.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'TRANSPORT_SERVICES', 'STAFF_QUARTERS', 18),
+(77, 'STAFF_CRCS1', 'CRCS Placement Coordinator 1 (Demo)', 'crcs.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'CRCS_CAREER_SERVICES', 'STAFF_QUARTERS', 19),
+(78, 'STAFF_ACAD1', 'Academic Grievance Staff 1 (Demo)', 'academic.staff1@srmap.edu.in', '$2a$10$aVVflfClHDPaz5BFacMVu.p0wiXIN2GX0dz2N1K/kWJkKBgQpqOS.', 'ROLE_DEPT_STAFF', 'VERIFIED', 'ACADEMIC_AFFAIRS', 'STAFF_QUARTERS', 20);
 
 -- ========== 2. Sample Master Incident (Idempotent with master_incident_id = 1) ==========
 INSERT IGNORE INTO master_incidents (master_incident_id, category_id, assigned_dept_id, building_block, incident_title, normalized_tokens, incident_status, affected_student_count) VALUES

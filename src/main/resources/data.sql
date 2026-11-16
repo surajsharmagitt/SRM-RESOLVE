@@ -30,7 +30,11 @@ INSERT IGNORE INTO departments (dept_id, dept_code, dept_name, contact_email, mo
 (13, 'STUDENT_AFFAIRS_SGRC', 'Directorate of Student Affairs (DSA) & SGRC', 'grievances@srmap.edu.in', 40),
 (14, 'HEALTH_COUNSELING', 'Health Centre, Wellness & Student Counseling', 'counseling@srmap.edu.in', 30),
 (15, 'EXAMINATION_COE', 'Office of Controller of Examinations (CoE)', 'coe@srmap.edu.in', 50),
-(16, 'FINANCE_ACCOUNTS', 'Directorate of Finance & Accounts', 'finance@srmap.edu.in', 40);
+(16, 'FINANCE_ACCOUNTS', 'Directorate of Finance & Accounts', 'finance@srmap.edu.in', 40),
+(17, 'LIBRARY_SERVICES', 'Central Library & Learning Resources', 'librarian@srmap.edu.in', 50),
+(18, 'TRANSPORT_SERVICES', 'Campus Transport & Commuter Services', 'transport@srmap.edu.in', 40),
+(19, 'CRCS_CAREER_SERVICES', 'Career Services, Placements & Internships (CRCS)', 'crcs@srmap.edu.in', 40),
+(20, 'ACADEMIC_AFFAIRS', 'Academic Affairs & Teaching Coordination', 'academic.affairs@srmap.edu.in', 40);
 
 -- ========== 2. Student Directory (Authorized enrollment roster) ==========
 INSERT IGNORE INTO student_directory (reg_no, full_name, official_email, admission_year, current_study_year, department_code, section, is_active) VALUES
@@ -65,7 +69,15 @@ INSERT IGNORE INTO grievance_categories (category_id, category_code, display_nam
 (20, 'EXAM_EVALUATION', 'Examinations, Results & Grade Evaluation', 'bi-journal-check', FALSE, 'HIGH', 40),
 (21, 'FEE_FINANCE', 'Tuition Fees, Scholarship & Finance Office', 'bi-cash-coin', FALSE, 'HIGH', 40),
 (22, 'STUDENT_COUNSELING', 'Student Wellness & Confidential Counseling', 'bi-heart-pulse', FALSE, 'CRITICAL', 20),
-(23, 'STUDENT_DISPUTES', 'Student Affairs & Hostel Mediation', 'bi-people', FALSE, 'MEDIUM', 30);
+(23, 'STUDENT_DISPUTES', 'Student Affairs & Hostel Mediation', 'bi-people', FALSE, 'MEDIUM', 30),
+(24, 'LOST_OR_DAMAGED_ID_CARD', 'Lost / Replacement Student ID Card', 'bi-person-badge', FALSE, 'MEDIUM', 40),
+(25, 'ROUTINE_MEDICAL_SUPPORT', 'Routine Health Centre & Clinic Consultation', 'bi-capsule', FALSE, 'LOW', 50),
+(26, 'LIBRARY_SERVICES', 'Central Library, Books & Reading Hall', 'bi-book-half', FALSE, 'LOW', 50),
+(27, 'TRANSPORT_SERVICES', 'Campus Bus Schedules & Commuter Transport', 'bi-bus-front', TRUE, 'MEDIUM', 50),
+(28, 'PLACEMENT_INTERNSHIP', 'CRCS Placement Drives & Internship Approvals', 'bi-briefcase', FALSE, 'HIGH', 40),
+(29, 'ACADEMIC_ATTENDANCE_FACULTY', 'Academic Grievances, Attendance & Course Materials', 'bi-mortarboard', FALSE, 'MEDIUM', 40),
+(30, 'HOSTEL_ADMINISTRATION', 'Hostel Room Allotment & Warden Affairs', 'bi-building-gear', FALSE, 'MEDIUM', 40),
+(31, 'GENERAL_STUDENT_SERVICES', 'General Student Affairs & SGRC Triage', 'bi-inbox', FALSE, 'MEDIUM', 50);
 
 -- ========== 4. Routing Rules ==========
 INSERT IGNORE INTO routing_rules (category_id, location_scope, target_dept_id) VALUES
@@ -133,7 +145,24 @@ INSERT IGNORE INTO routing_rules (category_id, location_scope, target_dept_id) V
 (22, 'ANY', 14),
 -- 23. STUDENT_DISPUTES -> STUDENT_AFFAIRS_SGRC
 (23, 'HOSTEL', 13),
-(23, 'ANY', 13);
+(23, 'ANY', 13),
+-- 24. LOST_OR_DAMAGED_ID_CARD -> ITKM_HELPDESK
+(24, 'ANY', 5),
+-- 25. ROUTINE_MEDICAL_SUPPORT -> HEALTH_COUNSELING
+(25, 'ANY', 14),
+-- 26. LIBRARY_SERVICES -> LIBRARY_SERVICES
+(26, 'ANY', 17),
+-- 27. TRANSPORT_SERVICES -> TRANSPORT_SERVICES
+(27, 'ANY', 18),
+-- 28. PLACEMENT_INTERNSHIP -> CRCS_CAREER_SERVICES
+(28, 'ANY', 19),
+-- 29. ACADEMIC_ATTENDANCE_FACULTY -> ACADEMIC_AFFAIRS
+(29, 'ANY', 20),
+-- 30. HOSTEL_ADMINISTRATION -> STUDENT_AFFAIRS_SGRC
+(30, 'HOSTEL', 13),
+(30, 'ANY', 13),
+-- 31. GENERAL_STUDENT_SERVICES -> STUDENT_AFFAIRS_SGRC
+(31, 'ANY', 13);
 
 -- ========== 5. SLA Policies ==========
 INSERT IGNORE INTO sla_policies (category_id, priority, ack_deadline_minutes, resolution_deadline_minutes) VALUES
@@ -182,4 +211,20 @@ INSERT IGNORE INTO sla_policies (category_id, priority, ack_deadline_minutes, re
 -- 22. STUDENT_COUNSELING (Wellness Response)
 (22, 'LOW', 120, 480), (22, 'MEDIUM', 60, 240), (22, 'HIGH', 30, 120), (22, 'CRITICAL', 15, 60),
 -- 23. STUDENT_DISPUTES
-(23, 'LOW', 480, 2880), (23, 'MEDIUM', 240, 1440), (23, 'HIGH', 120, 720), (23, 'CRITICAL', 60, 360);
+(23, 'LOW', 480, 2880), (23, 'MEDIUM', 240, 1440), (23, 'HIGH', 120, 720), (23, 'CRITICAL', 60, 360),
+-- 24. LOST_OR_DAMAGED_ID_CARD
+(24, 'LOW', 480, 2880), (24, 'MEDIUM', 240, 1440), (24, 'HIGH', 120, 720), (24, 'CRITICAL', 60, 360),
+-- 25. ROUTINE_MEDICAL_SUPPORT
+(25, 'LOW', 240, 1440), (25, 'MEDIUM', 120, 720), (25, 'HIGH', 60, 360), (25, 'CRITICAL', 30, 120),
+-- 26. LIBRARY_SERVICES
+(26, 'LOW', 480, 2880), (26, 'MEDIUM', 240, 1440), (26, 'HIGH', 120, 720), (26, 'CRITICAL', 60, 360),
+-- 27. TRANSPORT_SERVICES
+(27, 'LOW', 480, 2880), (27, 'MEDIUM', 240, 1440), (27, 'HIGH', 120, 720), (27, 'CRITICAL', 60, 360),
+-- 28. PLACEMENT_INTERNSHIP
+(28, 'LOW', 240, 1440), (28, 'MEDIUM', 120, 720), (28, 'HIGH', 60, 360), (28, 'CRITICAL', 30, 180),
+-- 29. ACADEMIC_ATTENDANCE_FACULTY
+(29, 'LOW', 480, 2880), (29, 'MEDIUM', 240, 1440), (29, 'HIGH', 120, 720), (29, 'CRITICAL', 60, 360),
+-- 30. HOSTEL_ADMINISTRATION
+(30, 'LOW', 480, 2880), (30, 'MEDIUM', 240, 1440), (30, 'HIGH', 120, 720), (30, 'CRITICAL', 60, 360),
+-- 31. GENERAL_STUDENT_SERVICES
+(31, 'LOW', 480, 2880), (31, 'MEDIUM', 240, 1440), (31, 'HIGH', 120, 720), (31, 'CRITICAL', 60, 360);

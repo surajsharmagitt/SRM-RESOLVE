@@ -247,52 +247,61 @@ public class StudentController {
             }
 
             GrievanceCategory category = routingSlaDao.findCategoryById(categoryId)
-                    .orElseGet(() -> {
-                        GrievanceCategory fallback = new GrievanceCategory();
-                        fallback.setCategoryId(17);
-                        fallback.setCategoryCode("GENERAL_CAMPUS_ISSUE");
-                        fallback.setDisplayName("General Campus Infrastructure Concern");
-                        fallback.setDefaultPriority(Priority.MEDIUM);
-                        return fallback;
-                    });
+                    .orElseGet(() -> routingSlaDao.findCategoryById(31)
+                            .orElseGet(() -> {
+                                GrievanceCategory fallback = new GrievanceCategory();
+                                fallback.setCategoryId(31);
+                                fallback.setCategoryCode("GENERAL_STUDENT_SERVICES");
+                                fallback.setDisplayName("General Student Affairs & SGRC Triage");
+                                fallback.setDefaultPriority(Priority.MEDIUM);
+                                return fallback;
+                            }));
 
-            // 1. Resolve Target Department via routing rules or intelligence engine prediction
-            Integer targetDeptId = null;
-            if (request.getLocationScope() != null) {
-                targetDeptId = routingSlaDao.resolveTargetDepartment(category.getCategoryId(), request.getLocationScope()).orElse(null);
+            // 1. Resolve Scope and Locations
+            LocationScope locationScope = request.getLocationScope() != null ? request.getLocationScope() : prediction.getLocationScope();
+            if (locationScope == null) locationScope = LocationScope.ANY;
+
+            String buildingBlock = (request.getBuildingBlock() != null && !request.getBuildingBlock().isBlank())
+                    ? request.getBuildingBlock().trim()
+                    : ((prediction.getBuildingBlock() != null && !prediction.getBuildingBlock().isBlank())
+                            ? prediction.getBuildingBlock().trim()
+                            : (student.getBuildingBlock() != null ? student.getBuildingBlock() : "Campus General Premises"));
+
+            String roomOrLocation = (request.getRoomOrLocation() != null && !request.getRoomOrLocation().isBlank())
+                    ? request.getRoomOrLocation().trim()
+                    : ((prediction.getRoomOrLocation() != null && !prediction.getRoomOrLocation().isBlank())
+                            ? prediction.getRoomOrLocation().trim()
+                            : (student.getRoomOrZone() != null ? student.getRoomOrZone() : "General Area"));
+
+            // 2. Resolve Target Department via routing rules (fallback to Student Affairs Dept 13, never defaulting to CLM)
+            Integer targetDeptId = routingSlaDao.resolveTargetDepartment(category.getCategoryId(), locationScope).orElse(null);
+            if (targetDeptId == null && locationScope != LocationScope.ANY) {
+                targetDeptId = routingSlaDao.resolveTargetDepartment(category.getCategoryId(), LocationScope.ANY).orElse(null);
             }
-            if (targetDeptId == null) {
+            if (targetDeptId == null && category.getCategoryId().equals(prediction.getCategoryId())) {
                 targetDeptId = prediction.getTargetDeptId();
             }
             if (targetDeptId == null) {
-                targetDeptId = 1; // Default to Hostel Maintenance
+                targetDeptId = 13; // Directorate of Student Affairs (DSA) & SGRC Triage (never default to CLM)
             }
-
-            // 2. Resolve Scope and Locations with automatic entity fallback
-            LocationScope locationScope = request.getLocationScope() != null ? request.getLocationScope() : prediction.getLocationScope();
-            if (locationScope == null) locationScope = LocationScope.HOSTEL;
-
-            String buildingBlock = (request.getBuildingBlock() != null && !request.getBuildingBlock().isBlank())
-                    ? request.getBuildingBlock()
-                    : prediction.getBuildingBlock();
-
-            String roomOrLocation = (request.getRoomOrLocation() != null && !request.getRoomOrLocation().isBlank())
-                    ? request.getRoomOrLocation()
-                    : prediction.getRoomOrLocation();
 
             // 3. Resolve SLA Deadlines with Intelligent Priority Engine
             Priority priority;
-            if (prediction.isEmergency()) {
+            if (prediction.isEmergency() && category.getCategoryId().equals(prediction.getCategoryId())) {
                 priority = Priority.CRITICAL;
             } else if (priorityService != null) {
                 priority = priorityService.determineInitialPriority(category.getCategoryId(), buildingBlock, category.getDefaultPriority());
             } else {
-                priority = prediction.getPriority() != null ? prediction.getPriority() : category.getDefaultPriority();
+                priority = category.getDefaultPriority() != null ? category.getDefaultPriority() : Priority.MEDIUM;
             }
 
             Optional<SlaPolicy> slaPolicy = routingSlaDao.findSlaPolicy(category.getCategoryId(), priority);
-            int ackMinutes = prediction.getAckMinutes() > 0 ? prediction.getAckMinutes() : slaPolicy.map(SlaPolicy::getAckDeadlineMinutes).orElse(120);
-            int resMinutes = prediction.getResolutionMinutes() > 0 ? prediction.getResolutionMinutes() : slaPolicy.map(SlaPolicy::getResolutionDeadlineMinutes).orElse(1440);
+            int ackMinutes = (prediction.getAckMinutes() > 0 && category.getCategoryId().equals(prediction.getCategoryId()))
+                    ? prediction.getAckMinutes()
+                    : slaPolicy.map(SlaPolicy::getAckDeadlineMinutes).orElse(120);
+            int resMinutes = (prediction.getResolutionMinutes() > 0 && category.getCategoryId().equals(prediction.getCategoryId()))
+                    ? prediction.getResolutionMinutes()
+                    : slaPolicy.map(SlaPolicy::getResolutionDeadlineMinutes).orElse(1440);
 
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime ackDeadline = now.plusMinutes(ackMinutes);
