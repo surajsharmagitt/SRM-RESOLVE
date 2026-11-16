@@ -74,16 +74,20 @@ srm-resolve/
 
 ---
 
-## Test Credentials & Portals
+## Classroom Demonstration Credentials & Portals
 
-| Role | Portal Route | Email | Auth Method |
-| :--- | :--- | :--- | :--- |
-| **Student** | `/student-login` | Any `@srmap.edu.in` email | Email OTP or Passkey `123456` |
-| **Water & Plumbing Staff** | `/authority-login` | `water.staff1@srmap.edu.in` | `staff123` |
-| **Hostel / CLM Staff** | `/authority-login` | `hostel.staff1@srmap.edu.in` | `staff123` |
-| **Department Head (Water)** | `/authority-login` | `water.head@srmap.edu.in` | `staff123` |
-| **Department Head (CLM)** | `/authority-login` | `hostel.head@srmap.edu.in` | `staff123` |
-| **Vice-Chancellor / Executive** | `/admin-login` | `vc@srmap.edu.in` | `admin123` |
+> **Note on Demonstration Mode:** Demonstration user accounts and passkeys are seeded and active **only** when `app.demo-mode=true` (local evaluation / test profile). In production (`app.demo-mode=false`), demonstration accounts with known passwords are not seeded, and the evaluation passkey is strictly disabled. No demonstration accounts impersonate real university officials.
+
+| Role | Portal Route | Account Name | Email | Auth Method (Demo Mode Only) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Student (Demo)** | `/student-login` | Suraj Sharma (Demo Student) | `suraj_sharma@srmap.edu.in` | Email OTP or Passkey `123456` |
+| **Student (Demo)** | `/student-login` | Ananya Reddy (Demo Student) | `ananya_reddy@srmap.edu.in` | Email OTP or Passkey `123456` |
+| **Water & Plumbing Staff** | `/authority-login` | Water Plumbing Staff 1 (Demo) | `water.staff1@srmap.edu.in` | `staff123` |
+| **Hostel / CLM Staff** | `/authority-login` | Hostel Maintenance Staff 1 (Demo) | `hostel.staff1@srmap.edu.in` | `staff123` |
+| **Department Head (Water)** | `/authority-login` | Water & Plumbing Lead (Demo) | `water.head@srmap.edu.in` | `staff123` |
+| **Department Head (CLM)** | `/authority-login` | Hostel & CLM Lead (Demo) | `hostel.head@srmap.edu.in` | `staff123` |
+| **Vice-Chancellor / Executive** | `/admin-login` | Office of Vice Chancellor (Demo) | `vc@srmap.edu.in` | `admin123` |
+| **Administrator** | `/admin-login` | Campus Administrator (Demo) | `admin@srmap.edu.in` | `admin123` |
 
 ---
 
@@ -92,25 +96,40 @@ srm-resolve/
 ### Prerequisites
 - OpenJDK 21+
 - Apache Maven 3.9+
-- MySQL 8.0+ on port `3306`
+- MySQL 8.0+ running on port `3306`
 
-### Run Automated Test Suite (46 Tests)
+### Run Automated Test Suite (63 Tests)
 ```bash
 mvn clean test
 ```
 
-### Build & Run Locally
+### Build & Run Locally for Classroom Demonstration
+To enable local demonstration accounts (`data-demo.sql`) and evaluation passkey (`123456`), launch with `APP_DEMO_MODE=true`:
 ```bash
 mvn clean package -DskipTests
-java -Duser.timezone=Asia/Kolkata -jar target/srm-resolve-1.0.0.jar
+APP_DEMO_MODE=true java -Duser.timezone=Asia/Kolkata -jar target/srm-resolve-1.0.0.jar
+```
+Or via JVM argument:
+```bash
+java -Duser.timezone=Asia/Kolkata -Dapp.demo-mode=true -jar target/srm-resolve-1.0.0.jar
 ```
 Open [http://localhost:8080/](http://localhost:8080/) in your browser.
 
 ---
 
-## Cloud Deployment (Render)
+## Cloud Deployment & Environmental Limitations
 
-`render.yaml` and `Dockerfile` provide turnkey container deployment:
-- Stage 1 builds `srm-resolve-1.0.0.jar` using `maven:3.9.6-eclipse-temurin-21`.
-- Stage 2 starts embedded MariaDB cleanly via `docker-entrypoint.sh` (when no external `SPRING_DATASOURCE_URL` is provided) and runs the JVM with heap tuned (`-Xmx320m -Xms128m`) for container stability.
-- Health checks probe `/welcome`.
+### 1. Render Free Tier Ephemeral Storage Warning
+- The Render application currently runs inside a single container embedding MariaDB alongside the Java 21 runtime.
+- **Data Loss Risk:** On the Render free tier, web service container filesystems are **ephemeral**. When the container spins down due to inactivity, crashes, restarts, or is replaced following a Git commit redeployment, the `/var/lib/mysql` storage resets to the build image baseline. Any complaints, user registrations, status updates, or chat messages created during that cloud container session will be lost upon container replacement.
+- **Classroom Demonstration Guarantee:** For evaluators and classroom demonstrations, run against a local MySQL database (`localhost:3306`) as described above, where database state is fully persistent across application restarts.
+- **Permanent Cloud Persistence (Optional):** For zero data loss in a live production environment, connect to an external managed MySQL database (e.g., AWS RDS, GCP Cloud SQL, or Render Managed MySQL) by configuring `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD`. The container startup script (`docker-entrypoint.sh`) automatically detects external database URLs and bypasses the container's internal MariaDB instance.
+
+### 2. Production vs. Demonstration Security Modes
+- **Production Default:** `app.demo-mode=false` (enforced via `application.properties` and Render environment).
+- **Public Protection Guarantees:**
+  - Demonstration accounts with publicly known passwords (`admin123`, `staff123`, `password123`) in `data-demo.sql` are **never** seeded into the database in production.
+  - The universal OTP bypass (`123456`) is strictly disabled on the server; students must authenticate via genuine 6-digit email verification codes.
+  - Registration and password-reset OTP codes are never logged to console or displayed in web pages.
+  - State-changing REST endpoints (`/api/tickets/{id}/messages`, simulator, notifications) enforce strict CSRF protection.
+  - Department heads and staff are server-side restricted to their assigned department's tickets across all queue, messaging, and search endpoints.

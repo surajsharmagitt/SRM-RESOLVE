@@ -298,13 +298,9 @@ public class StudentController {
             LocalDateTime ackDeadline = now.plusMinutes(ackMinutes);
             LocalDateTime resDeadline = now.plusMinutes(resMinutes);
 
-            // 4. Generate Ticket Reference with dynamic calendar year (e.g. SRM-2026-000006)
-            long seq = ticketDao.getNextTicketSequence();
-            int currentYear = java.time.LocalDate.now().getYear();
-            String ticketRef = String.format("SRM-%d-%06d", currentYear, seq);
-
+            // 4. Ticket reference is generated safely from the auto-increment ticket_id upon insert
             GrievanceTicket ticket = new GrievanceTicket();
-            ticket.setTicketReference(ticketRef);
+            ticket.setTicketReference(null); // ticketDao.insert safely generates SRM-YYYY-NNNNNN from auto-increment ID
             ticket.setStudentUserId(student.getUserId());
             ticket.setCategoryId(category.getCategoryId());
             ticket.setAssignedDeptId(targetDeptId);
@@ -327,6 +323,7 @@ public class StudentController {
             ticket.setMasterIncidentId(resolvedMasterId);
 
             Long ticketId = ticketDao.insert(ticket);
+            String ticketRef = ticket.getTicketReference();
 
             // 6. Update distinct student count on master incident if linked (Section 6.2)
             if (resolvedMasterId != null) {

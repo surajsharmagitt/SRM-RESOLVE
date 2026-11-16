@@ -342,19 +342,36 @@ public class ApiController {
 
     /**
      * Dynamic parameterized ticket search endpoint.
+     * Enforces strict server-side RBAC:
+     * - Students can search ONLY their own tickets (client studentUserId/deptId overwritten or ignored).
+     * - Department staff and department heads can search ONLY their assigned department's tickets.
+     * - Admins and executives retain campus-wide search capability.
      */
     @PostMapping("/tickets/search")
     public ResponseEntity<List<GrievanceTicket>> searchTickets(
-            @RequestBody com.srmresolve.dto.TicketSearchCriteria criteria,
+            @RequestBody(required = false) com.srmresolve.dto.TicketSearchCriteria criteria,
             Authentication auth) {
         User currentUser = resolveCurrentUser(auth);
         if (currentUser == null) return ResponseEntity.status(401).build();
 
-        // Enforce RBAC constraints
-        if (currentUser.getRole().name().equals("ROLE_STUDENT")) {
+        if (criteria == null) {
+            criteria = new com.srmresolve.dto.TicketSearchCriteria();
+        }
+
+        String role = currentUser.getRole().name();
+        if ("ROLE_STUDENT".equals(role)) {
+            // Students can only search their own tickets; never trust client-submitted studentUserId or deptId
             criteria.setStudentUserId(currentUser.getUserId());
-        } else if (currentUser.getRole().name().equals("ROLE_DEPT_STAFF")) {
+            criteria.setDeptId(null);
+        } else if ("ROLE_DEPT_STAFF".equals(role) || "ROLE_DEPT_HEAD".equals(role)) {
+            // Department staff and heads can only search their assigned department's tickets
+            if (currentUser.getAssignedDeptId() == null) {
+                return ResponseEntity.status(403).build();
+            }
             criteria.setDeptId(currentUser.getAssignedDeptId());
+            criteria.setStudentUserId(null); // Never trust client-submitted studentUserId for staff/head searches
+        } else if (!"ROLE_ADMIN".equals(role) && !"ROLE_EXECUTIVE".equals(role)) {
+            return ResponseEntity.status(403).build();
         }
 
         return ResponseEntity.ok(ticketDao.searchTickets(criteria));

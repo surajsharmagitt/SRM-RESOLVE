@@ -41,6 +41,9 @@ class SecurityAndLifecycleRegressionTest {
     @Autowired
     private UserDao userDao;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @Test
     @DisplayName("Scenario 1: Health check endpoint /welcome responds with 200 OK")
     void testHealthCheckServesOk() throws Exception {
@@ -84,6 +87,18 @@ class SecurityAndLifecycleRegressionTest {
     @DisplayName("Scenario 5: Student cannot post message to another student's ticket (403 Forbidden)")
     void testStudentCannotPostMessageToOtherStudentTicket() throws Exception {
         String body = "{\"messageBody\": \"Intruder message\"}";
+        mockMvc.perform(post("/api/tickets/1/messages")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "suraj_sharma@srmap.edu.in", roles = {"STUDENT"})
+    @DisplayName("Scenario 5b: State-changing API call without CSRF token is blocked (403 Forbidden)")
+    void testApiPostWithoutCsrfTokenIsBlocked() throws Exception {
+        String body = "{\"messageBody\": \"Legitimate text without token\"}";
         mockMvc.perform(post("/api/tickets/1/messages")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -134,5 +149,122 @@ class SecurityAndLifecycleRegressionTest {
         // Ticket 1 belongs to Suraj Sharma (student 18)
         mockMvc.perform(get("/api/tickets/1/messages"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "water.head@srmap.edu.in", roles = {"DEPT_HEAD"})
+    @DisplayName("Scenario 11: Department head search ignores client-forged deptId and enforces assigned department")
+    void testDeptHeadSearchRestrictedToOwnDepartment() throws Exception {
+        // Water Dept Head (dept_id = 2) attempts to query tickets from CLM (dept_id = 1)
+        String forgedPayload = "{\"deptId\": 1}";
+        String responseContent = mockMvc.perform(post("/api/tickets/search")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(forgedPayload))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // Any tickets returned must be for Water Plumbing (dept 2), never CLM (dept 1)
+        assertFalse(responseContent.contains("\"assignedDeptId\":1"));
+    }
+
+    @Test
+    @WithMockUser(username = "suraj_sharma@srmap.edu.in", roles = {"STUDENT"})
+    @DisplayName("Scenario 12: Student search ignores client-forged studentUserId and returns only own tickets")
+    void testStudentSearchCannotForgeStudentUserId() throws Exception {
+        // Suraj (user_id = 18) attempts to search for tickets belonging to Ananya (user_id = 19)
+        String forgedPayload = "{\"studentUserId\": 19}";
+        String responseContent = mockMvc.perform(post("/api/tickets/search")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(forgedPayload))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // Returned tickets must belong to student 18, never student 19
+        assertFalse(responseContent.contains("\"studentUserId\":19"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@srmap.edu.in", roles = {"ADMIN"})
+    @DisplayName("Scenario 13: Administrator retains campus-wide search access")
+    void testAdminCanSearchAllDepartments() throws Exception {
+        String payload = "{\"deptId\": 1}";
+        mockMvc.perform(post("/api/tickets/search")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Scenario 14: Ticket references are guaranteed unique even after deletions and follow SRM-YYYY-NNNNNN")
+    void testTicketReferenceUniquenessAfterDeletions() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+        // 1. Insert first test ticket
+        GrievanceTicket tA = new GrievanceTicket();
+        tA.setStudentUserId(18L);
+        tA.setCategoryId(1);
+        tA.setAssignedDeptId(1);
+        tA.setLocationScope(LocationScope.HOSTEL);
+        tA.setBuildingBlock("Ganga Tower - Block A");
+        tA.setRoomOrLocation("G-101");
+        tA.setRawDescription("Test Ticket A for reference uniqueness");
+        tA.setPriority(Priority.MEDIUM);
+        tA.setStatus(TicketStatus.SUBMITTED);
+        tA.setAckDeadlineAt(now.plusHours(4));
+        tA.setResolutionDeadlineAt(now.plusHours(24));
+        Long idA = ticketDao.insert(tA);
+        String refA = tA.getTicketReference();
+
+        assertNotNull(refA);
+        assertTrue(refA.matches("^SRM-\\d{4}-\\d{6}$"), "Reference must match SRM-YYYY-NNNNNN: " + refA);
+
+        // 2. Insert second test ticket
+        GrievanceTicket tB = new GrievanceTicket();
+        tB.setStudentUserId(18L);
+        tB.setCategoryId(1);
+        tB.setAssignedDeptId(1);
+        tB.setLocationScope(LocationScope.HOSTEL);
+        tB.setBuildingBlock("Ganga Tower - Block A");
+        tB.setRoomOrLocation("G-102");
+        tB.setRawDescription("Test Ticket B for reference uniqueness");
+        tB.setPriority(Priority.MEDIUM);
+        tB.setStatus(TicketStatus.SUBMITTED);
+        tB.setAckDeadlineAt(now.plusHours(4));
+        tB.setResolutionDeadlineAt(now.plusHours(24));
+        Long idB = ticketDao.insert(tB);
+        String refB = tB.getTicketReference();
+
+        assertNotNull(refB);
+        assertNotEquals(refA, refB, "Consecutive tickets must not have identical references");
+
+        // 3. Simulate ticket deletion (which previously caused COUNT(*) + 1 to collide)
+        jdbcTemplate.update("DELETE FROM grievance_tickets WHERE ticket_id = ?", idB);
+
+        // 4. Insert third test ticket after deletion
+        GrievanceTicket tC = new GrievanceTicket();
+        tC.setStudentUserId(18L);
+        tC.setCategoryId(1);
+        tC.setAssignedDeptId(1);
+        tC.setLocationScope(LocationScope.HOSTEL);
+        tC.setBuildingBlock("Ganga Tower - Block A");
+        tC.setRoomOrLocation("G-103");
+        tC.setRawDescription("Test Ticket C for reference uniqueness");
+        tC.setPriority(Priority.MEDIUM);
+        tC.setStatus(TicketStatus.SUBMITTED);
+        tC.setAckDeadlineAt(now.plusHours(4));
+        tC.setResolutionDeadlineAt(now.plusHours(24));
+        Long idC = ticketDao.insert(tC);
+        String refC = tC.getTicketReference();
+
+        assertNotNull(refC);
+        assertTrue(refC.matches("^SRM-\\d{4}-\\d{6}$"), "Reference must match SRM-YYYY-NNNNNN: " + refC);
+        assertNotEquals(refA, refC, "Post-deletion ticket must not collide with existing ticket reference");
+        assertNotEquals(refB, refC, "Post-deletion ticket must not reuse deleted ticket reference");
+
+        // Cleanup test records
+        jdbcTemplate.update("DELETE FROM grievance_tickets WHERE ticket_id IN (?, ?)", idA, idC);
     }
 }

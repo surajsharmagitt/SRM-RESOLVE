@@ -135,6 +135,14 @@ public class GrievanceTicketDao {
     }
 
     public Long insert(GrievanceTicket t) {
+        int currentYear = java.time.LocalDate.now().getYear();
+        boolean autoAssignReference = (t.getTicketReference() == null || t.getTicketReference().isBlank() || t.getTicketReference().startsWith("PENDING"));
+
+        // If ticketReference is not explicitly preset, use a unique temporary token during initial insert (fits within VARCHAR(30))
+        String insertReference = autoAssignReference
+                ? "PEND-" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16)
+                : t.getTicketReference();
+
         String sql = "INSERT INTO grievance_tickets (" +
                      "  ticket_reference, student_user_id, category_id, assigned_dept_id, assigned_staff_user_id, " +
                      "  master_incident_id, location_scope, building_block, room_or_location, raw_description, " +
@@ -144,7 +152,7 @@ public class GrievanceTicketDao {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, t.getTicketReference());
+            ps.setString(1, insertReference);
             ps.setLong(2, t.getStudentUserId());
             ps.setInt(3, t.getCategoryId());
             ps.setInt(4, t.getAssignedDeptId());
@@ -167,8 +175,14 @@ public class GrievanceTicketDao {
 
         Number key = keyHolder.getKey();
         if (key != null) {
-            t.setTicketId(key.longValue());
-            return key.longValue();
+            long ticketId = key.longValue();
+            t.setTicketId(ticketId);
+            if (autoAssignReference) {
+                String permanentReference = String.format("SRM-%d-%06d", currentYear, ticketId);
+                jdbcTemplate.update("UPDATE grievance_tickets SET ticket_reference = ? WHERE ticket_id = ?", permanentReference, ticketId);
+                t.setTicketReference(permanentReference);
+            }
+            return ticketId;
         }
         return null;
     }
@@ -249,12 +263,13 @@ public class GrievanceTicketDao {
     }
 
     /**
-     * Count tickets for reference sequence generator (e.g. SRM-2026-000006).
+     * Database-safe sequence generator: uses MAX(ticket_id) + 1 instead of COUNT(*) + 1
+     * so deletions never cause duplicate ticket reference collisions.
      */
     public long getNextTicketSequence() {
-        String sql = "SELECT COUNT(*) FROM grievance_tickets";
-        Long count = jdbcTemplate.queryForObject(sql, Long.class);
-        return (count != null ? count : 0) + 1;
+        String sql = "SELECT COALESCE(MAX(ticket_id), 0) + 1 FROM grievance_tickets";
+        Long next = jdbcTemplate.queryForObject(sql, Long.class);
+        return (next != null ? next : 1);
     }
 
     /**

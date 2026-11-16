@@ -26,7 +26,12 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler customAccessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
-            response.sendRedirect("/error?status=403");
+            String uri = request.getRequestURI();
+            if (uri.startsWith("/api/")) {
+                response.sendError(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+            } else {
+                response.sendRedirect("/error?status=403");
+            }
         };
     }
 
@@ -104,7 +109,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**", "/student-login/**", "/auth/login-process")
+                .ignoringRequestMatchers("/api/predict-issue", "/api/enhance-ai", "/student-login/**", "/auth/login-process")
             )
             .exceptionHandling(ex -> ex
                 .accessDeniedHandler(customAccessDeniedHandler())
